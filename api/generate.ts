@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
-const DASHSCOPE_BASE = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+const DASHSCOPE_BASE = 'https://coding.dashscope.aliyuncs.com/v1'
 const MODEL = 'kimi-k2.5'
 
 const CARDS_PROMPT_EN = `You are an expert educator. Analyze the provided text and generate a structured learning card sequence.
