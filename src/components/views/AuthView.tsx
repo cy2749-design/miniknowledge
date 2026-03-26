@@ -11,30 +11,37 @@ type Mode = 'login' | 'signup'
 
 export default function AuthView({ onAuth, t }: Props) {
   const [mode, setMode] = useState<Mode>('login')
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [message, setMessage] = useState('')
+
+  function toEmail(u: string) {
+    return u.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_') + '@mk.local'
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    setMessage('')
+    const u = username.trim()
+    if (!u || u.length < 2) { setError(t('auth.username_short')); return }
+    if (password.length < 6) { setError(t('auth.password_short')); return }
     if (!supabase) { onAuth(); return }
     setLoading(true)
+    const email = toEmail(u)
     try {
       if (mode === 'signup') {
-        const { error: err } = await supabase.auth.signUp({ email, password })
+        const { error: err } = await supabase.auth.signUp({ email, password, options: { data: { username: u } } })
         if (err) throw err
-        setMessage(t('auth.check_email'))
+        onAuth()
       } else {
         const { error: err } = await supabase.auth.signInWithPassword({ email, password })
         if (err) throw err
         onAuth()
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
+      const msg = err instanceof Error ? err.message : String(err)
+      setError(msg.includes('Invalid') ? t('auth.invalid') : msg)
     } finally {
       setLoading(false)
     }
@@ -60,16 +67,16 @@ export default function AuthView({ onAuth, t }: Props) {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <input
-              type="email"
-              required
-              placeholder={t('auth.email')}
-              value={email}
-              onChange={e => setEmail(e.target.value)}
+              type="text"
+              autoComplete="username"
+              placeholder={t('auth.username')}
+              value={username}
+              onChange={e => setUsername(e.target.value)}
               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
             />
             <input
               type="password"
-              required
+              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
               placeholder={t('auth.password')}
               value={password}
               onChange={e => setPassword(e.target.value)}
@@ -77,7 +84,6 @@ export default function AuthView({ onAuth, t }: Props) {
             />
 
             {error && <p className="text-red-500 text-xs">{error}</p>}
-            {message && <p className="text-green-600 text-xs">{message}</p>}
 
             <button
               type="submit"
@@ -91,7 +97,7 @@ export default function AuthView({ onAuth, t }: Props) {
 
           <div className="mt-4 text-center">
             <button
-              onClick={() => { setMode(m => m === 'login' ? 'signup' : 'login'); setError(''); setMessage('') }}
+              onClick={() => { setMode(m => m === 'login' ? 'signup' : 'login'); setError('') }}
               className="text-xs text-gray-400 hover:text-gray-700 transition-colors"
             >
               {mode === 'login' ? t('auth.no_account') : t('auth.has_account')}
