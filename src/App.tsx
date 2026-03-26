@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useLanguage } from './hooks/useLanguage'
-import { generateCards, generateAISummary } from './utils/generateCards'
+import { generateCards, generateAISummary, findRelated } from './utils/generateCards'
 import type { ViewId, Card, Answers, Source } from './types'
 import { supabase } from './lib/supabase'
 
@@ -41,6 +41,8 @@ export default function App() {
 
   const [aiSummaryBullets, setAiSummaryBullets] = useState<string[]>([])
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false)
+  const [aiRelatedLinks, setAiRelatedLinks] = useState<{title: string; url: string; description: string}[]>([])
+  const [aiRelatedLoading, setAiRelatedLoading] = useState(false)
 
   async function handleSubmit(text: string, src: Source) {
     setSourceText(text)
@@ -54,6 +56,17 @@ export default function App() {
       const withComplete: Card[] = [...generated, { type: 'complete' }]
       setCards(withComplete)
       setView('learning')
+      // Start AI summary + related articles in background while user answers cards
+      setAiSummaryLoading(true)
+      setAiRelatedLoading(true)
+      generateAISummary(text, lang)
+        .then(bullets => setAiSummaryBullets(bullets))
+        .catch(() => setAiSummaryBullets([]))
+        .finally(() => setAiSummaryLoading(false))
+      findRelated(text, lang)
+        .then(links => setAiRelatedLinks(links))
+        .catch(() => setAiRelatedLinks([]))
+        .finally(() => setAiRelatedLoading(false))
     } catch (e) {
       console.error(e)
       setView('home')
@@ -64,14 +77,8 @@ export default function App() {
     setAnswers(prev => ({ ...prev, [idx]: { sel, correct } }))
   }, [])
 
-  async function handleLearningComplete() {
+  function handleLearningComplete() {
     setView('ai-summary')
-    setAiSummaryLoading(true)
-    try {
-      const bullets = await generateAISummary(sourceText, lang)
-      setAiSummaryBullets(bullets)
-    } catch { setAiSummaryBullets([]) }
-    setAiSummaryLoading(false)
   }
 
   function handleRestart() {
@@ -79,6 +86,7 @@ export default function App() {
     setCards([])
     setAnswers({})
     setAiSummaryBullets([])
+    setAiRelatedLinks([])
   }
 
   function handleReplay(replayCards: Card[]) {
@@ -127,6 +135,8 @@ export default function App() {
           <AISummaryView
             bullets={aiSummaryBullets}
             loading={aiSummaryLoading}
+            relatedLinks={aiRelatedLinks}
+            relatedLoading={aiRelatedLoading}
             sourceText={sourceText}
             lang={lang}
             onContinue={() => setView('summary')}

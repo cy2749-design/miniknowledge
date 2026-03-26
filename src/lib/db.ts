@@ -47,8 +47,12 @@ export async function saveSession(params: {
 
   if (!supabase) return
 
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) { console.error('[db] no authenticated user'); return }
+
   const { error: sessionErr } = await supabase.from('learning_sessions').upsert({
     id,
+    user_id: user.id,
     title,
     source_type: source.type,
     source_url: source.url ?? null,

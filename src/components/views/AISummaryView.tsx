@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Loader2, Search, ExternalLink, Bookmark, Check } from 'lucide-react'
+import { Loader2, ExternalLink, Bookmark, Check } from 'lucide-react'
 import { addReadLater } from '../../lib/db'
 import type { ReadLaterEntry } from '../../types'
 
@@ -12,33 +12,16 @@ interface RelatedLink {
 interface Props {
   bullets: string[]
   loading: boolean
+  relatedLinks: RelatedLink[]
+  relatedLoading: boolean
   sourceText: string
   lang: string
   onContinue: () => void
   t: (key: string) => string
 }
 
-export default function AISummaryView({ bullets, loading, sourceText: _sourceText, onContinue, t }: Props) {
-  const [relatedLinks, setRelatedLinks] = useState<RelatedLink[]>([])
-  const [findingRelated, setFindingRelated] = useState(false)
+export default function AISummaryView({ bullets, loading, relatedLinks, relatedLoading, onContinue, t }: Props) {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
-
-  async function handleFindRelated() {
-    setFindingRelated(true)
-    try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: 'find-related', text: _sourceText }),
-      })
-      if (!res.ok) throw new Error('Failed')
-      const data = await res.json()
-      setRelatedLinks(data.links ?? [])
-    } catch {
-      setRelatedLinks([])
-    }
-    setFindingRelated(false)
-  }
 
   async function handleSaveLink(link: RelatedLink) {
     const entry: ReadLaterEntry = {
@@ -78,21 +61,13 @@ export default function AISummaryView({ bullets, loading, sourceText: _sourceTex
           )}
         </div>
 
-        {!loading && relatedLinks.length === 0 && (
-          <button
-            onClick={handleFindRelated}
-            disabled={findingRelated}
-            className="w-full py-3 border-2 border-gray-900 text-gray-900 font-semibold rounded-xl hover:bg-gray-50 transition-colors mb-4 flex items-center justify-center gap-2 disabled:opacity-60"
-          >
-            {findingRelated ? (
-              <><Loader2 size={16} className="animate-spin" />{t('aisummary.finding')}</>
-            ) : (
-              <><Search size={16} />{t('aisummary.find_related')}</>
-            )}
-          </button>
-        )}
-
-        {relatedLinks.length > 0 && (
+        {/* Related articles — show loading state or results */}
+        {relatedLoading ? (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-4 flex items-center gap-3 text-gray-400">
+            <Loader2 size={16} className="animate-spin" />
+            <span className="text-sm">{t('aisummary.finding')}</span>
+          </div>
+        ) : relatedLinks.length > 0 && (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-4">
             <h2 className="font-bold text-gray-900 mb-4">{t('aisummary.related_title')}</h2>
             <div className="flex flex-col gap-3">
