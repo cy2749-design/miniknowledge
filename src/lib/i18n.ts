@@ -77,6 +77,21 @@ const translations = {
     'complete.title': 'Well done!',
     'complete.subtitle': 'You have completed all cards.',
     'complete.continue': 'See Deeper Explanation',
+
+    // Auth
+    'auth.login_title': 'Welcome back',
+    'auth.login_sub': 'Sign in to save your learning sessions',
+    'auth.signup_title': 'Create account',
+    'auth.signup_sub': 'Save and revisit your learning sessions',
+    'auth.email': 'Email address',
+    'auth.password': 'Password',
+    'auth.login_btn': 'Sign in',
+    'auth.signup_btn': 'Create account',
+    'auth.no_account': "Don't have an account? Sign up",
+    'auth.has_account': 'Already have an account? Sign in',
+    'auth.skip': 'Continue without account',
+    'auth.check_email': 'Check your email to confirm your account.',
+    'auth.logout': 'Sign out',
   },
   zh: {
     // Header
@@ -154,6 +169,21 @@ const translations = {
     'complete.title': '太棒了！',
     'complete.subtitle': '你已完成所有卡片。',
     'complete.continue': '查看深度解析',
+
+    // Auth
+    'auth.login_title': '欢迎回来',
+    'auth.login_sub': '登录以保存你的学习记录',
+    'auth.signup_title': '创建账号',
+    'auth.signup_sub': '保存并回顾你的学习历程',
+    'auth.email': '邮箱地址',
+    'auth.password': '密码',
+    'auth.login_btn': '登录',
+    'auth.signup_btn': '注册',
+    'auth.no_account': '没有账号？立即注册',
+    'auth.has_account': '已有账号？立即登录',
+    'auth.skip': '先不登录，直接使用',
+    'auth.check_email': '请查收邮件，点击确认链接完成注册。',
+    'auth.logout': '退出登录',
   },
 }
 

@@ -46,12 +46,12 @@ export default function HomeView({ onSubmit, t }: Props) {
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="text-center mb-10"
         >
-          <div className="inline-flex items-center gap-2 bg-white/70 backdrop-blur-sm border border-blue-100 px-4 py-1.5 rounded-full text-sm text-blue-600 font-medium mb-5 shadow-sm">
+          <div className="inline-flex items-center gap-2 bg-white border border-gray-200 px-4 py-1.5 rounded-full text-sm text-gray-500 font-medium mb-5 shadow-sm">
             <Sparkles size={14} />
             MiniKnowledge
           </div>
           <h1 className="text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
-            <span className="text-gradient">{t('home.title')}</span>
+            {t('home.title')}
           </h1>
           <p className="mt-4 text-gray-500 text-lg leading-relaxed max-w-md mx-auto">{t('home.subtitle')}</p>
         </motion.div>
@@ -84,7 +84,7 @@ export default function HomeView({ onSubmit, t }: Props) {
               onChange={e => setValue(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSubmit()}
               placeholder={t('home.url.placeholder')}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition bg-white"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 transition bg-white"
             />
           ) : (
             <textarea
@@ -93,7 +93,7 @@ export default function HomeView({ onSubmit, t }: Props) {
               onChange={e => setValue(e.target.value)}
               placeholder={t('home.text.placeholder')}
               rows={6}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition resize-none bg-white"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 transition resize-none bg-white"
             />
           )}
 
@@ -102,7 +102,7 @@ export default function HomeView({ onSubmit, t }: Props) {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="mt-4 w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-xl shadow-md btn-primary disabled:opacity-60 flex items-center justify-center gap-2"
+            className="mt-4 w-full py-3 bg-gray-900 text-white font-semibold rounded-xl shadow-md btn-primary disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {loading ? <><Loader2 size={16} className="animate-spin" />{t('home.submitting')}</> : t('home.submit')}
           </button>

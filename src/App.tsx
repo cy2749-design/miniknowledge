@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useLanguage } from './hooks/useLanguage'
 import { generateCards, generateDeeper, generateExamples } from './utils/generateCards'
 import type { ViewId, Card, Answers, Source } from './types'
+import { supabase } from './lib/supabase'
 
 import Header from './components/ui/Header'
 import HomeView from './components/views/HomeView'
@@ -11,6 +12,7 @@ import DeeperView from './components/views/DeeperView'
 import ExamplesView from './components/views/ExamplesView'
 import SummaryView from './components/views/SummaryView'
 import ArchiveView from './components/views/ArchiveView'
+import AuthView from './components/views/AuthView'
 
 function genId() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36)
@@ -19,6 +21,19 @@ function genId() {
 export default function App() {
   const { lang, setLang, t } = useLanguage()
   const [view, setView] = useState<ViewId>('home')
+  const [authed, setAuthed] = useState<boolean | null>(null) // null = checking
+
+  // Check Supabase session on load
+  useEffect(() => {
+    if (!supabase) { setAuthed(true); return }
+    supabase.auth.getSession().then(({ data }) => {
+      setAuthed(!!data.session)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthed(!!session)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   // Session state
   const [sessionId] = useState(genId)
@@ -32,6 +47,7 @@ export default function App() {
   const [deeperLoading, setDeeperLoading] = useState(false)
   const [examples, setExamples] = useState<string[]>([])
   const [examplesLoading, setExamplesLoading] = useState(false)
+
   async function handleSubmit(text: string, src: Source) {
     setSourceText(text)
     setSource(src)
@@ -89,12 +105,28 @@ export default function App() {
     setView('learning')
   }
 
+  async function handleLogout() {
+    if (supabase) await supabase.auth.signOut()
+    setAuthed(false)
+  }
+
+  // Loading auth state
+  if (authed === null) {
+    return <div className="min-h-screen bg-[#fafafa] flex items-center justify-center"><div className="w-5 h-5 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" /></div>
+  }
+
+  // Not authed → show auth screen
+  if (!authed) {
+    return <AuthView onAuth={() => setAuthed(true)} t={t} />
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#fafafa]">
       <Header
         lang={lang}
         setLang={setLang}
         onArchive={() => setView('archive')}
+        onLogout={supabase ? handleLogout : undefined}
         t={t}
       />
       <main className="pt-14">
@@ -153,4 +185,3 @@ export default function App() {
     </div>
   )
 }
-

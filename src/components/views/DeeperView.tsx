@@ -28,7 +28,7 @@ export default function DeeperView({ content, loading, onContinue, t }: Props) {
         {!loading && (
           <button
             onClick={onContinue}
-            className="mt-6 w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-xl shadow-md btn-primary"
+            className="mt-6 w-full py-3 bg-gray-900 text-white font-semibold rounded-xl shadow-md btn-primary"
           >
             {t('deeper.continue')}
           </button>

@@ -8,8 +8,7 @@ function getInitialLang(): Lang {
   const stored = localStorage.getItem(STORAGE_KEY)
   if (stored === 'en' || stored === 'zh') return stored
   // Auto-detect from browser
-  const browserLang = navigator.language.toLowerCase()
-  return browserLang.startsWith('zh') ? 'zh' : 'en'
+  return 'en'
 }
 
 export function useLanguage() {

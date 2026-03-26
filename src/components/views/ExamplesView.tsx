@@ -25,7 +25,7 @@ export default function ExamplesView({ examples, loading, onContinue, t }: Props
             <ol className="flex flex-col gap-5">
               {examples.map((ex, i) => (
                 <li key={i} className="flex gap-4">
-                  <span className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 text-blue-700 font-bold text-sm flex items-center justify-center shrink-0">{i + 1}</span>
+                  <span className="w-8 h-8 rounded-full bg-gray-100 text-gray-700 font-bold text-sm flex items-center justify-center shrink-0">{i + 1}</span>
                   <p className="text-gray-700 leading-relaxed pt-0.5">{ex}</p>
                 </li>
               ))}
@@ -35,7 +35,7 @@ export default function ExamplesView({ examples, loading, onContinue, t }: Props
         {!loading && (
           <button
             onClick={onContinue}
-            className="mt-6 w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-xl shadow-md btn-primary"
+            className="mt-6 w-full py-3 bg-gray-900 text-white font-semibold rounded-xl shadow-md btn-primary"
           >
             {t('examples.continue')}
           </button>

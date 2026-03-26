@@ -30,7 +30,7 @@ export default function QuizCard({ card, onAnswer, savedAnswer, t }: Props) {
 
   function optionCls(letter: string) {
     const base = 'flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all cursor-pointer '
-    if (!answered) return base + 'option-btn border-gray-200 hover:border-blue-400 hover:bg-blue-50'
+    if (!answered) return base + 'option-btn border-gray-200 hover:border-gray-700 hover:bg-gray-50'
     if (letter === card.correct) return base + 'border-green-500 bg-green-50 text-green-800'
     if (letter === sel) return base + 'border-red-400 bg-red-50 text-red-700'
     return base + 'border-gray-100 text-gray-400'
