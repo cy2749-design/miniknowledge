@@ -1,6 +1,5 @@
 import { Layers, Archive, LogOut } from 'lucide-react'
 import type { Lang } from '../../types'
-import InstallPrompt from './InstallPrompt'
 
 interface Props {
   lang: Lang
@@ -21,7 +20,6 @@ export default function Header({ lang, setLang, onArchive, onLogout, t }: Props)
           <span className="font-extrabold text-gray-900 text-sm tracking-tight">{t('header.logo')}</span>
         </div>
         <div className="flex items-center gap-2">
-          <InstallPrompt t={t} />
           <button
             onClick={onArchive}
             className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors px-2 py-1 rounded-lg hover:bg-gray-100"

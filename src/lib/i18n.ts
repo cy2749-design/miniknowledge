@@ -105,19 +105,6 @@ const translations = {
     'auth.has_account': 'Already have an account? Sign in',
     'auth.skip': 'Continue without account',
     'auth.logout': 'Sign out',
-
-    // Install prompt
-    'install.button': 'Add to Home Screen',
-    'install.title': 'Add to Home Screen',
-    'install.subtitle': 'Follow these 3 steps in Safari',
-    'install.inapp': 'Please open this page in Safari to add it to your home screen.',
-    'install.step1_title': 'Tap the Share button',
-    'install.step1_desc': 'at the bottom of your screen',
-    'install.step2_title': 'Scroll and tap',
-    'install.step2_desc': '"Add to Home Screen"',
-    'install.step3_title': 'Tap "Add"',
-    'install.step3_desc': 'in the top right corner',
-    'install.close': 'Got it',
   },
   zh: {
     // Header
@@ -223,19 +210,6 @@ const translations = {
     'auth.has_account': '已有账号？立即登录',
     'auth.skip': '先不登录，直接使用',
     'auth.logout': '退出登录',
-
-    // Install prompt
-    'install.button': '添加到桌面',
-    'install.title': '添加到主屏幕',
-    'install.subtitle': '在 Safari 中按以下步骤操作',
-    'install.inapp': '请用 Safari 打开本页面，再添加到主屏幕。',
-    'install.step1_title': '点击底部分享按钮',
-    'install.step1_desc': '就是屏幕底部中间那个图标',
-    'install.step2_title': '滑动找到并点击',
-    'install.step2_desc': '「添加到主屏幕」',
-    'install.step3_title': '点击右上角「添加」',
-    'install.step3_desc': '即可完成安装',
-    'install.close': '知道了',
   },
 }
 
