@@ -17,7 +17,7 @@ export default function AuthView({ onAuth, t }: Props) {
   const [error, setError] = useState('')
 
   function toEmail(u: string) {
-    return u.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_') + '@mk.local'
+    return u.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_') + '@mkuser.app'
   }
 
   async function handleSubmit(e: React.FormEvent) {
