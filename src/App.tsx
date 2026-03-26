@@ -95,6 +95,44 @@ export default function App() {
     setView('learning')
   }
 
+  async function handleLearnFromUrl(url: string, title: string) {
+    setView('loading')
+    setCards([])
+    setAnswers({})
+    setAiSummaryBullets([])
+    setAiRelatedLinks([])
+    try {
+      const res = await fetch('/api/fetch-article', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      })
+      const data = await res.json()
+      const text = data.text as string
+      const fetchedTitle = (data.title as string) || title
+      const src: Source = { type: 'url', url, title: fetchedTitle }
+      setSourceText(text)
+      setSource(src)
+      const generated = await generateCards(text, lang)
+      const withComplete: Card[] = [...generated, { type: 'complete' }]
+      setCards(withComplete)
+      setView('learning')
+      setAiSummaryLoading(true)
+      setAiRelatedLoading(true)
+      generateAISummary(text, lang)
+        .then(bullets => setAiSummaryBullets(bullets))
+        .catch(() => setAiSummaryBullets([]))
+        .finally(() => setAiSummaryLoading(false))
+      findRelated(text, lang)
+        .then(links => setAiRelatedLinks(links))
+        .catch(() => setAiRelatedLinks([]))
+        .finally(() => setAiRelatedLoading(false))
+    } catch (e) {
+      console.error(e)
+      setView('home')
+    }
+  }
+
   async function handleLogout() {
     if (supabase) await supabase.auth.signOut()
     setAuthed(false)
@@ -161,6 +199,7 @@ export default function App() {
           <ArchiveView
             onBack={() => setView('home')}
             onReplay={handleReplay}
+            onLearnFromUrl={handleLearnFromUrl}
             t={t}
           />
         )}

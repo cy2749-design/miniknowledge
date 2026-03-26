@@ -75,6 +75,12 @@ const translations = {
     'archive.source.url': 'URL',
     'archive.source.text': 'Text',
     'archive.open_link': 'Open',
+    'archive.learn': 'Learn now',
+    'archive.expand': 'Show key takeaways',
+    'archive.collapse': 'Hide key takeaways',
+    'archive.key_takeaways': 'Key Takeaways',
+    'archive.no_takeaways': 'No key takeaways recorded.',
+    'archive.takeaways_count': 'takeaways',
 
     // Complete card
     'complete.title': 'Well done!',
@@ -172,6 +178,12 @@ const translations = {
     'archive.source.url': '链接',
     'archive.source.text': '文字',
     'archive.open_link': '打开',
+    'archive.learn': '立即学习',
+    'archive.expand': '展开要点',
+    'archive.collapse': '收起要点',
+    'archive.key_takeaways': '核心要点',
+    'archive.no_takeaways': '暂无记录的要点。',
+    'archive.takeaways_count': '个要点',
 
     // Complete card
     'complete.title': '太棒了！',
