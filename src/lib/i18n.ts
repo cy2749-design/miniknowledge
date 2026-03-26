@@ -41,17 +41,16 @@ const translations = {
     'learning.keypoints': 'Key Points',
     'learning.summary_label': 'Summary',
 
-    // Deeper
-    'deeper.title': 'Deeper Understanding',
-    'deeper.subtitle': 'A richer explanation of the core concepts',
-    'deeper.continue': 'See Real-World Examples',
-    'deeper.loading': 'Generating deeper explanation...',
-
-    // Examples
-    'examples.title': 'Real-World Examples',
-    'examples.subtitle': 'How these concepts apply in practice',
-    'examples.continue': 'View My Results',
-    'examples.loading': 'Generating examples...',
+    // AI Summary
+    'aisummary.title': 'AI Summary',
+    'aisummary.subtitle': 'Key insights from this article',
+    'aisummary.loading': 'Generating summary...',
+    'aisummary.continue': 'View Results',
+    'aisummary.find_related': 'Find Related Reading',
+    'aisummary.finding': 'Searching...',
+    'aisummary.related_title': 'Related Articles',
+    'aisummary.add_read_later': 'Save',
+    'aisummary.added': 'Saved',
 
     // Summary
     'summary.title': 'Session Complete!',
@@ -65,18 +64,22 @@ const translations = {
     'summary.review_again': 'Review Cards',
 
     // Archive
-    'archive.title': 'Learning Archive',
+    'archive.title': 'Archive',
+    'archive.tab.learned': 'Learned',
+    'archive.tab.read_later': 'Read Later',
     'archive.empty': 'No sessions yet. Start learning!',
+    'archive.read_later_empty': 'No saved articles yet.',
     'archive.score': 'Score',
     'archive.replay': 'Review',
     'archive.delete': 'Delete',
     'archive.source.url': 'URL',
     'archive.source.text': 'Text',
+    'archive.open_link': 'Open',
 
     // Complete card
     'complete.title': 'Well done!',
     'complete.subtitle': 'You have completed all cards.',
-    'complete.continue': 'See Deeper Explanation',
+    'complete.continue': 'See AI Summary',
 
     // Auth
     'auth.login_title': 'Welcome back',
@@ -135,17 +138,16 @@ const translations = {
     'learning.keypoints': '关键词',
     'learning.summary_label': '总结',
 
-    // Deeper
-    'deeper.title': '深度理解',
-    'deeper.subtitle': '对核心概念更丰富的解释',
-    'deeper.continue': '查看实际案例',
-    'deeper.loading': '正在生成深度解析...',
-
-    // Examples
-    'examples.title': '实际案例',
-    'examples.subtitle': '这些概念在现实中的应用',
-    'examples.continue': '查看学习结果',
-    'examples.loading': '正在生成案例...',
+    // AI Summary
+    'aisummary.title': 'AI 总结',
+    'aisummary.subtitle': '本文核心洞察',
+    'aisummary.loading': '正在生成总结...',
+    'aisummary.continue': '查看结果',
+    'aisummary.find_related': '找相关阅读',
+    'aisummary.finding': '搜索中...',
+    'aisummary.related_title': '相关文章',
+    'aisummary.add_read_later': '保存',
+    'aisummary.added': '已保存',
 
     // Summary
     'summary.title': '学习完成！',
@@ -160,17 +162,21 @@ const translations = {
 
     // Archive
     'archive.title': '学习记录',
+    'archive.tab.learned': '已学',
+    'archive.tab.read_later': '稍后阅读',
     'archive.empty': '暂无学习记录，开始学习吧！',
+    'archive.read_later_empty': '暂无保存的文章。',
     'archive.score': '得分',
     'archive.replay': '回顾',
     'archive.delete': '删除',
     'archive.source.url': '链接',
     'archive.source.text': '文字',
+    'archive.open_link': '打开',
 
     // Complete card
     'complete.title': '太棒了！',
     'complete.subtitle': '你已完成所有卡片。',
-    'complete.continue': '查看深度解析',
+    'complete.continue': '查看 AI 总结',
 
     // Auth
     'auth.login_title': '欢迎回来',

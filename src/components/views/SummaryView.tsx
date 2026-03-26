@@ -10,14 +10,13 @@ interface Props {
   title: string
   source: Source
   lang: Lang
-  deeperExplanation?: string
-  realWorldExamples?: string[]
+  bulletPoints?: string[]
   onRestart: () => void
   onReviewCards: () => void
   t: (key: string, vars?: Record<string, string | number>) => string
 }
 
-export default function SummaryView({ cards, answers, sessionId, title, source, lang, deeperExplanation, realWorldExamples, onRestart, onReviewCards, t }: Props) {
+export default function SummaryView({ cards, answers, sessionId, title, source, lang, bulletPoints, onRestart, onReviewCards, t }: Props) {
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -33,7 +32,7 @@ export default function SummaryView({ cards, answers, sessionId, title, source, 
     setSaving(true)
     await saveSession({
       id: sessionId, title, source, lang, cards, answers,
-      score: correctCount, total, deeperExplanation, realWorldExamples,
+      score: correctCount, total, bulletPoints,
     })
     setSaved(true)
     setSaving(false)
@@ -50,15 +49,29 @@ export default function SummaryView({ cards, answers, sessionId, title, source, 
         </div>
 
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-4">
-          <div className="text-center mb-6">
-            <p className="text-sm text-gray-400 mb-1">{t('summary.score')}</p>
-            <p className="text-5xl font-extrabold text-gray-900">{correctCount}<span className="text-2xl text-gray-400 font-normal"> / {total}</span></p>
-            <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-gray-700 to-gray-900 rounded-full transition-all duration-1000" style={{ width: `${pct}%` }} />
-            </div>
-            <p className="text-sm text-gray-500 mt-2">{t('summary.mastery')} {pct}%</p>
+          <div className="text-center mb-4">
+            <p className="text-sm text-gray-500 mb-1">{t('summary.score')}</p>
+            <p className="text-4xl font-black text-gray-900">{correctCount}<span className="text-lg font-normal text-gray-400">/{total}</span></p>
           </div>
+          <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-gray-700 to-gray-900 rounded-full transition-all duration-1000" style={{ width: `${pct}%` }} />
+          </div>
+          <p className="text-sm text-gray-500 mt-2 text-center">{t('summary.mastery')} {pct}%</p>
         </div>
+
+        {bulletPoints && bulletPoints.length > 0 && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-4">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Key Takeaways</h2>
+            <ul className="flex flex-col gap-2">
+              {bulletPoints.map((b, i) => (
+                <li key={i} className="flex gap-2 text-sm text-gray-700">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-gray-400 shrink-0" />
+                  {b}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="flex flex-col gap-3">
           <button
@@ -66,7 +79,7 @@ export default function SummaryView({ cards, answers, sessionId, title, source, 
             disabled={saved || saving}
             className="w-full py-3 border-2 border-gray-900 text-gray-900 font-semibold rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            {saved ? <><Check size={16} />{t('summary.saved')}</> : saving ? <><BookMarked size={16} className="animate-pulse" />{t('summary.saving') || '...'}</> : <><BookMarked size={16} />{t('summary.save')}</>}
+            {saved ? <><Check size={16} />{t('summary.saved')}</> : saving ? <><BookMarked size={16} className="animate-pulse" />...</> : <><BookMarked size={16} />{t('summary.save')}</>}
           </button>
           <button onClick={onReviewCards} className="w-full py-3 border-2 border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
             <RotateCcw size={16} />{t('summary.review_again')}

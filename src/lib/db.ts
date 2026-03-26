@@ -3,15 +3,23 @@
  * Uses Supabase when env vars are set, falls back to localStorage silently.
  */
 import { supabase } from './supabase'
-import type { Card, Answers, ArchiveEntry, Source, Lang } from '../types'
+import type { Card, Answers, ArchiveEntry, ReadLaterEntry, Source, Lang } from '../types'
 
 const LOCAL_KEY = 'mk-archive'
+const READ_LATER_KEY = 'mk-read-later'
 
 function getLocal(): ArchiveEntry[] {
   try { return JSON.parse(localStorage.getItem(LOCAL_KEY) ?? '[]') } catch { return [] }
 }
 function setLocal(entries: ArchiveEntry[]) {
   localStorage.setItem(LOCAL_KEY, JSON.stringify(entries))
+}
+
+function getReadLaterLocal(): ReadLaterEntry[] {
+  try { return JSON.parse(localStorage.getItem(READ_LATER_KEY) ?? '[]') } catch { return [] }
+}
+function setReadLaterLocal(entries: ReadLaterEntry[]) {
+  localStorage.setItem(READ_LATER_KEY, JSON.stringify(entries))
 }
 
 // ─── Save completed session ───────────────────────────────────────────────────
@@ -24,23 +32,21 @@ export async function saveSession(params: {
   answers: Answers
   score: number
   total: number
-  deeperExplanation?: string
-  realWorldExamples?: string[]
+  bulletPoints?: string[]
 }): Promise<void> {
-  const { id, title, source, lang, cards, score, total, deeperExplanation, realWorldExamples } = params
+  const { id, title, source, lang, cards, score, total, bulletPoints } = params
 
-  // Always persist to localStorage as backup
   const entry: ArchiveEntry = {
     id, title,
     sourceType: source.type,
+    sourceUrl: source.url,
     date: new Date().toISOString(),
-    score, total, cards, deeperExplanation, realWorldExamples,
+    score, total, cards, bulletPoints,
   }
   setLocal([entry, ...getLocal().filter(e => e.id !== id)])
 
   if (!supabase) return
 
-  // ── learning_sessions ──
   const { error: sessionErr } = await supabase.from('learning_sessions').upsert({
     id,
     title,
@@ -54,7 +60,6 @@ export async function saveSession(params: {
   })
   if (sessionErr) { console.error('[db] session save:', sessionErr); return }
 
-  // ── session_cards ──
   const cardRows = cards.map((card, i) => ({
     session_id: id,
     card_index: i,
@@ -62,29 +67,27 @@ export async function saveSession(params: {
     card_data: card as unknown as Record<string, unknown>,
   }))
   const { error: cardsErr } = await supabase.from('session_cards').upsert(cardRows)
-  if (cardsErr) console.error('[db] cards save:', cardsErr)
+  if (cardsErr) { console.error('[db] cards save:', cardsErr); return }
 
-  // ── session_extras ──
-  if (deeperExplanation || realWorldExamples?.length) {
+  if (bulletPoints) {
     const { error: extrasErr } = await supabase.from('session_extras').upsert({
       session_id: id,
-      deeper_explanation: deeperExplanation ?? null,
-      real_world_examples: realWorldExamples ?? null,
+      deeper_explanation: bulletPoints.join('\n'),
     })
     if (extrasErr) console.error('[db] extras save:', extrasErr)
   }
 }
 
-// ─── Load all completed sessions ─────────────────────────────────────────────
+// ─── Load archive sessions ────────────────────────────────────────────────────
 export async function loadSessions(): Promise<ArchiveEntry[]> {
   if (!supabase) return getLocal()
 
   const { data, error } = await supabase
     .from('learning_sessions')
     .select(`
-      id, title, source_type, created_at, score, total_quiz,
+      id, title, source_type, source_url, created_at, score, total_quiz,
       session_cards ( card_index, card_data ),
-      session_extras ( deeper_explanation, real_world_examples )
+      session_extras ( deeper_explanation )
     `)
     .eq('status', 'completed')
     .order('created_at', { ascending: false })
@@ -99,6 +102,7 @@ export async function loadSessions(): Promise<ArchiveEntry[]> {
     id: row.id,
     title: row.title,
     sourceType: row.source_type as 'url' | 'text',
+    sourceUrl: row.source_url ?? undefined,
     date: row.created_at,
     score: row.score ?? 0,
     total: row.total_quiz ?? 0,
@@ -107,8 +111,9 @@ export async function loadSessions(): Promise<ArchiveEntry[]> {
       .sort((a: any, b: any) => a.card_index - b.card_index)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((c: any) => c.card_data as Card),
-    deeperExplanation: row.session_extras?.[0]?.deeper_explanation ?? undefined,
-    realWorldExamples: row.session_extras?.[0]?.real_world_examples ?? undefined,
+    bulletPoints: row.session_extras?.[0]?.deeper_explanation
+      ? row.session_extras[0].deeper_explanation.split('\n').filter(Boolean)
+      : undefined,
   }))
 }
 
@@ -118,4 +123,17 @@ export async function deleteSession(id: string): Promise<void> {
   if (!supabase) return
   const { error } = await supabase.from('learning_sessions').delete().eq('id', id)
   if (error) console.error('[db] delete session:', error)
+}
+
+// ─── Read Later ───────────────────────────────────────────────────────────────
+export async function addReadLater(entry: ReadLaterEntry): Promise<void> {
+  setReadLaterLocal([entry, ...getReadLaterLocal().filter(e => e.id !== entry.id)])
+}
+
+export async function loadReadLater(): Promise<ReadLaterEntry[]> {
+  return getReadLaterLocal()
+}
+
+export async function deleteReadLater(id: string): Promise<void> {
+  setReadLaterLocal(getReadLaterLocal().filter(e => e.id !== id))
 }

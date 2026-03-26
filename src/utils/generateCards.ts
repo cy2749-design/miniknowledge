@@ -17,30 +17,30 @@ export async function generateCards(
   return data.cards as Card[]
 }
 
-export async function generateDeeper(
-  text: string,
-  lang: string
-): Promise<string> {
-  const res = await fetch('/api/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mode: 'deeper', text, lang }),
-  })
-  if (!res.ok) throw new Error('Failed to generate deeper explanation')
-  const data = await res.json()
-  return data.content as string
-}
-
-export async function generateExamples(
+export async function generateAISummary(
   text: string,
   lang: string
 ): Promise<string[]> {
   const res = await fetch('/api/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mode: 'examples', text, lang }),
+    body: JSON.stringify({ mode: 'ai-summary', text, lang }),
   })
-  if (!res.ok) throw new Error('Failed to generate examples')
+  if (!res.ok) throw new Error('Failed to generate AI summary')
   const data = await res.json()
-  return data.examples as string[]
+  return data.bullets as string[]
+}
+
+export async function findRelated(
+  text: string,
+  lang: string
+): Promise<{ title: string; url: string; description: string }[]> {
+  const res = await fetch('/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode: 'find-related', text, lang }),
+  })
+  if (!res.ok) throw new Error('Failed to find related articles')
+  const data = await res.json()
+  return data.links
 }

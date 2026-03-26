@@ -1,5 +1,5 @@
 // ─── View Routing ───────────────────────────────────────────────────────────
-export type ViewId = 'home' | 'loading' | 'learning' | 'deeper' | 'examples' | 'summary' | 'archive'
+export type ViewId = 'home' | 'loading' | 'learning' | 'ai-summary' | 'summary' | 'archive'
 
 // ─── Language ────────────────────────────────────────────────────────────────
 export type Lang = 'en' | 'zh'
@@ -22,7 +22,7 @@ export interface ContentCard {
   tag: string
   tagCls: 'tagConcept'
   title: string
-  html: string  // restricted HTML: <p> <strong> <em> <ul> <li> <kblock>
+  html: string
 }
 
 export interface QuizCard {
@@ -32,7 +32,7 @@ export interface QuizCard {
   title: string
   question: string
   options: QuizOption[]
-  correct: string  // letter
+  correct: string
   explain: string
 }
 
@@ -41,7 +41,7 @@ export interface ReviewCard {
   tag: string
   tagCls: 'tagReview'
   title: string
-  keyPoints: string  // comma-separated keywords
+  keyPoints: string
   question: string
   options: QuizOption[]
   correct: string
@@ -63,7 +63,7 @@ export interface OutputCard {
   tag: string
   tagCls: 'tagOutput'
   title: string
-  summary: string  // paragraph
+  summary: string
   question: string
   options: QuizOption[]
   correct: string
@@ -78,10 +78,10 @@ export type Card = ContentCard | QuizCard | ReviewCard | TrueFalseCard | OutputC
 
 // ─── Answer Tracking ─────────────────────────────────────────────────────────
 export interface Answer {
-  sel: string   // selected option letter (or 'T'/'F' for trueFalse)
+  sel: string
   correct: boolean
 }
-export type Answers = Record<number, Answer>  // keyed by card index
+export type Answers = Record<number, Answer>
 
 // ─── Learning Session (runtime) ───────────────────────────────────────────────
 export interface LearningSession {
@@ -90,9 +90,7 @@ export interface LearningSession {
   source: Source
   language: Lang
   cards: Card[]
-  deeperExplanation?: string
-  realWorldExamples?: string[]
-  sessionSummary?: string
+  aiSummary?: string[]   // bullet points
   answers: Answers
   createdAt: string
   completedAt?: string
@@ -103,10 +101,19 @@ export interface ArchiveEntry {
   id: string
   title: string
   sourceType: 'url' | 'text'
+  sourceUrl?: string
   date: string
-  score: number      // correct quiz answers
-  total: number      // total quiz cards
-  cards?: Card[]     // preserved for replay
-  deeperExplanation?: string
-  realWorldExamples?: string[]
+  score: number
+  total: number
+  cards?: Card[]
+  bulletPoints?: string[]  // AI-generated bullet point summary
+}
+
+// ─── Read Later Entry ────────────────────────────────────────────────────────
+export interface ReadLaterEntry {
+  id: string
+  title: string
+  url: string
+  description: string
+  addedAt: string
 }

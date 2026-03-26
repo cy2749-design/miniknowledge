@@ -71,13 +71,17 @@ output卡：
 
 只输出有效的JSON数组，不要markdown，不要解释。`
 
-const DEEPER_PROMPT = (lang: string) => lang === 'zh'
-  ? '用简体中文，对上文核心概念进行深度解析，150-200字，分段叙述，不用标题。'
-  : 'In English, provide a deeper explanation of the core concepts from the text above. 150-200 words, paragraph form, no headings.'
+const AI_SUMMARY_PROMPT = (lang: string) => lang === 'zh'
+  ? `你是一位善于提炼要点的分析师。请对以下文章内容进行深度总结，输出4-6个关键洞察，每条洞察一句话，直接输出，以「• 」开头，不要序号，不要其他说明。`
+  : `You are an insightful analyst. Summarize the following article into 4-6 key insights. Each insight is one sentence. Output each on its own line starting with "• ". No numbering, no preamble.`
 
-const EXAMPLES_PROMPT = (lang: string) => lang === 'zh'
-  ? '用简体中文，基于上文内容，给出3个现实世界的应用案例。每个案例一句话，以数字序号开头（1. 2. 3.），直接输出，不要额外说明。'
-  : 'In English, based on the text above, provide 3 real-world application examples. One sentence each, numbered (1. 2. 3.). Output directly, no preamble.'
+const FIND_RELATED_PROMPT = (lang: string) => lang === 'zh'
+  ? `基于以下文章主题，使用网络搜索找到3-5篇高质量的相关文章或资源。对于每个结果，输出以下格式的JSON数组（无markdown代码块）：
+[{"title":"文章标题","url":"https://...","description":"一句话描述为什么值得阅读"}]
+只输出JSON数组。`
+  : `Based on the topic of the following article, use web search to find 3-5 high-quality related articles or resources. For each result, output a JSON array (no markdown fences):
+[{"title":"Article title","url":"https://...","description":"One sentence on why it's worth reading"}]
+Output only the JSON array.`
 
 async function callDashScope(systemPrompt: string, userContent: string): Promise<string> {
   const apiKey = process.env.DASHSCOPE_API_KEY
@@ -109,6 +113,68 @@ async function callDashScope(systemPrompt: string, userContent: string): Promise
   return json.choices?.[0]?.message?.content ?? ''
 }
 
+async function callDashScopeWithSearch(systemPrompt: string, userContent: string): Promise<string> {
+  const apiKey = process.env.DASHSCOPE_API_KEY
+  if (!apiKey) throw new Error('DASHSCOPE_API_KEY not set')
+
+  const tools = [{
+    type: 'builtin_function',
+    function: { name: '$web_search' },
+  }]
+
+  let messages: { role: string; content: string; tool_call_id?: string; name?: string }[] = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userContent },
+  ]
+
+  // Agentic loop: keep calling until no more tool calls
+  for (let i = 0; i < 5; i++) {
+    const res = await fetch(`${DASHSCOPE_BASE}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages,
+        tools,
+        max_tokens: 8000,
+        temperature: 0.7,
+      }),
+    })
+
+    if (!res.ok) {
+      const err = await res.text()
+      throw new Error(`DashScope error ${res.status}: ${err}`)
+    }
+
+    const json = await res.json()
+    const choice = json.choices?.[0]
+    if (!choice) throw new Error('No response from model')
+
+    const msg = choice.message
+    messages.push(msg)
+
+    if (choice.finish_reason === 'tool_calls' && msg.tool_calls?.length) {
+      // Add tool result placeholders (the model handles actual search)
+      for (const tc of msg.tool_calls) {
+        messages.push({
+          role: 'tool',
+          tool_call_id: tc.id,
+          name: tc.function.name,
+          content: '', // model fills in results via its built-in search
+        })
+      }
+      continue
+    }
+
+    return msg.content ?? ''
+  }
+
+  throw new Error('Max tool call iterations reached')
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
@@ -119,25 +185,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (mode === 'cards') {
       const systemPrompt = lang === 'zh' ? CARDS_PROMPT_ZH : CARDS_PROMPT_EN
       const raw = await callDashScope(systemPrompt, text)
-      // Strip possible markdown fences
       const cleaned = raw.replace(/^```[\w]*\n?/m, '').replace(/\n?```$/m, '').trim()
       const cards = JSON.parse(cleaned)
       return res.json({ cards })
     }
 
-    if (mode === 'deeper') {
-      const content = await callDashScope(DEEPER_PROMPT(lang), text)
-      return res.json({ content })
+    if (mode === 'ai-summary') {
+      const raw = await callDashScope(AI_SUMMARY_PROMPT(lang), text)
+      const bullets = raw
+        .split('\n')
+        .map(l => l.replace(/^[•\-]\s*/, '').trim())
+        .filter(Boolean)
+        .slice(0, 6)
+      return res.json({ bullets })
     }
 
-    if (mode === 'examples') {
-      const raw = await callDashScope(EXAMPLES_PROMPT(lang), text)
-      const examples = raw
-        .split('\n')
-        .map(l => l.replace(/^\d+\.\s*/, '').trim())
-        .filter(Boolean)
-        .slice(0, 3)
-      return res.json({ examples })
+    if (mode === 'find-related') {
+      const raw = await callDashScopeWithSearch(FIND_RELATED_PROMPT(lang), text)
+      const cleaned = raw.replace(/^```[\w]*\n?/m, '').replace(/\n?```$/m, '').trim()
+      const links = JSON.parse(cleaned)
+      return res.json({ links })
     }
 
     return res.status(400).json({ error: `Unknown mode: ${mode}` })
