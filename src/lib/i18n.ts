@@ -7,7 +7,7 @@ const translations = {
     'header.archive': 'Archive',
 
     // Home
-    'home.title': 'Big ideas, broken into cards.',
+    'home.title': 'Long reads, short cards.',
     'home.subtitle': 'Paste any URL or text — we turn it into bite-sized cards, quizzes, and AI insights.',
     'home.subtitle2': 'Start learning in seconds.',
     'home.badge': 'AI-Powered Learning',
