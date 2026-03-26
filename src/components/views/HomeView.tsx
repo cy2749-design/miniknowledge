@@ -46,11 +46,11 @@ export default function HomeView({ onSubmit, t }: Props) {
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="text-center mb-10"
         >
-          <div className="inline-flex items-center gap-2 bg-white border border-gray-200 px-4 py-1.5 rounded-full text-sm text-gray-500 font-medium mb-5 shadow-sm">
-            <Sparkles size={14} />
-            MiniKnowledge
+          <div className="inline-flex items-center gap-2 bg-white border border-gray-200 px-4 py-1.5 rounded-full text-sm text-gray-500 font-medium mb-6 shadow-sm">
+            <Sparkles size={13} className="text-amber-500" />
+            {t('home.badge')}
           </div>
-          <h1 className="text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight leading-[1.15]">
             {t('home.title')}
           </h1>
           <p className="mt-4 text-gray-500 text-lg leading-relaxed max-w-md mx-auto">{t('home.subtitle')}</p>

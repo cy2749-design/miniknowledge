@@ -1,4 +1,4 @@
-import { BookOpen, Archive, LogOut } from 'lucide-react'
+import { Layers, Archive, LogOut } from 'lucide-react'
 import type { Lang } from '../../types'
 
 interface Props {
@@ -14,10 +14,10 @@ export default function Header({ lang, setLang, onArchive, onLogout, t }: Props)
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg header-gradient-border">
       <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gray-900 flex items-center justify-center">
-            <BookOpen size={14} className="text-white" />
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-gray-900 to-gray-600 flex items-center justify-center shadow-sm">
+            <Layers size={14} className="text-white" />
           </div>
-          <span className="font-bold text-gray-900 text-sm tracking-tight">{t('header.logo')}</span>
+          <span className="font-extrabold text-gray-900 text-sm tracking-tight">{t('header.logo')}</span>
         </div>
         <div className="flex items-center gap-2">
           <button

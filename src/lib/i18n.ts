@@ -7,8 +7,10 @@ const translations = {
     'header.archive': 'Archive',
 
     // Home
-    'home.title': 'Learn Anything, Deeply.',
-    'home.subtitle': 'Paste a URL or text. Get a structured learning experience with cards, quizzes, and deep dives.',
+    'home.title': 'Big ideas, broken into cards.',
+    'home.subtitle': 'Paste any URL or text — we turn it into bite-sized cards, quizzes, and AI insights.',
+    'home.subtitle2': 'Start learning in seconds.',
+    'home.badge': 'AI-Powered Learning',
     'home.tab.url': 'URL',
     'home.tab.text': 'Text',
     'home.url.placeholder': 'Paste an article URL...',
@@ -110,8 +112,10 @@ const translations = {
     'header.archive': '学习记录',
 
     // Home
-    'home.title': '深度学习任何知识',
-    'home.subtitle': '粘贴链接或文字，获得结构化的卡片学习体验，包含测验和深度解析。',
+    'home.title': '把复杂内容，拆成你记得住的卡片',
+    'home.subtitle': '粘贴任意链接或文字，自动生成卡片、测验与 AI 解析。',
+    'home.subtitle2': '几秒钟，开始学习。',
+    'home.badge': 'AI 驱动学习',
     'home.tab.url': '链接',
     'home.tab.text': '文字',
     'home.url.placeholder': '粘贴文章链接...',
