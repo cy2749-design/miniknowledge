@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useLanguage } from './hooks/useLanguage'
 import { generateCards, generateAISummary, findRelated } from './utils/generateCards'
 import type { ViewId, Card, Answers, Source, ReadMode, ArchiveEntry } from './types'
@@ -46,50 +46,66 @@ export default function App() {
   const [aiRelatedLinks, setAiRelatedLinks] = useState<{title: string; url: string; description: string}[]>([])
   const [aiRelatedLoading, setAiRelatedLoading] = useState(false)
 
+  const [generatingCount, setGeneratingCount] = useState(0)
+  const [archiveRefreshKey, setArchiveRefreshKey] = useState(0)
+
+  // true = 用户在等待界面等结果；false = 用户切走了，后台跑
+  const userIsWaiting = useRef(false)
+
+  function goBackground() {
+    userIsWaiting.current = false
+    setView('home')
+  }
+
   async function handleSubmit(text: string, src: Source) {
     const newId = genId()
-    setSessionId(newId)
-    setSourceText(text)
-    setSource(src)
-    setReadMode(src.readMode ?? 'deep')
+    const mode = src.readMode ?? 'deep'
+    userIsWaiting.current = true
+    setGeneratingCount(c => c + 1)
+    setView('loading')
     setCards([])
     setAnswers({})
     setAiSummaryBullets([])
-    setView('loading')
+    setAiRelatedLinks([])
+
     try {
-      const generated = await generateCards(text, lang, src.readMode ?? 'deep')
+      const generated = await generateCards(text, lang, mode)
       const withComplete: Card[] = [...generated, { type: 'complete' }]
-      setCards(withComplete)
 
-      // Auto-save as pending so user can study later even if they exit
-      savePendingSession({
-        id: newId,
-        title: src.title,
-        source: src,
-        lang,
-        readMode: src.readMode ?? 'deep',
-        cards: withComplete,
-        sourceText: text,
-      }).catch(console.error)
-
-      setView('learning')
-      setAiSummaryLoading(true)
-      setAiRelatedLoading(true)
-      generateAISummary(text, lang)
-        .then(bullets => setAiSummaryBullets(bullets))
-        .catch(() => setAiSummaryBullets([]))
-        .finally(() => setAiSummaryLoading(false))
-      findRelated(text, lang)
-        .then(links => setAiRelatedLinks(links))
-        .catch(() => setAiRelatedLinks([]))
-        .finally(() => setAiRelatedLoading(false))
+      if (userIsWaiting.current) {
+        // 用户还在等 → 直接进学习
+        setSessionId(newId)
+        setSourceText(text)
+        setSource(src)
+        setReadMode(mode)
+        setCards(withComplete)
+        setView('learning')
+        savePendingSession({ id: newId, title: src.title, source: src, lang, readMode: mode, cards: withComplete, sourceText: text }).catch(console.error)
+        setAiSummaryLoading(true)
+        setAiRelatedLoading(true)
+        generateAISummary(text, lang)
+          .then(bullets => setAiSummaryBullets(bullets))
+          .catch(() => setAiSummaryBullets([]))
+          .finally(() => setAiSummaryLoading(false))
+        findRelated(text, lang)
+          .then(links => setAiRelatedLinks(links))
+          .catch(() => setAiRelatedLinks([]))
+          .finally(() => setAiRelatedLoading(false))
+      } else {
+        // 用户切走了 → 存入待学习，刷新 Archive
+        await savePendingSession({ id: newId, title: src.title, source: src, lang, readMode: mode, cards: withComplete, sourceText: text })
+        setArchiveRefreshKey(k => k + 1)
+      }
     } catch (e) {
       console.error(e)
-      setView('home')
+      if (userIsWaiting.current) setView('home')
+    } finally {
+      setGeneratingCount(c => c - 1)
+      userIsWaiting.current = false
     }
   }
 
-  // Start a previously queued (pending) session from Archive
+  // 从 Archive 开始学习 pending 会话
   function handleStartPending(entry: ArchiveEntry) {
     setSessionId(entry.id)
     setSourceText(entry.sourceText ?? '')
@@ -100,7 +116,6 @@ export default function App() {
     setAiSummaryBullets(entry.bulletPoints ?? [])
     setAiRelatedLinks([])
     setView('learning')
-    // Kick off AI summary in background if not already available
     if (!entry.bulletPoints?.length && entry.sourceText) {
       setAiSummaryLoading(true)
       generateAISummary(entry.sourceText, entry.lang ?? lang)
@@ -132,14 +147,10 @@ export default function App() {
     setView('learning')
   }
 
+  // 从稍后学习生成 → 纯后台，用户留在 Archive
   async function handleLearnFromUrl(url: string, title: string) {
     const newId = genId()
-    setSessionId(newId)
-    setView('loading')
-    setCards([])
-    setAnswers({})
-    setAiSummaryBullets([])
-    setAiRelatedLinks([])
+    setGeneratingCount(c => c + 1)
     try {
       const res = await fetch('/api/fetch-article', {
         method: 'POST',
@@ -149,43 +160,27 @@ export default function App() {
       const data = await res.json()
       const text = data.text as string
       const fetchedTitle = (data.title as string) || title
-      const src: Source = { type: 'url', url, title: fetchedTitle, readMode }
-      setSourceText(text)
-      setSource(src)
-      const generated = await generateCards(text, lang, readMode)
+      const src: Source = { type: 'url', url, title: fetchedTitle, readMode: 'deep' }
+      const generated = await generateCards(text, lang, 'deep')
       const withComplete: Card[] = [...generated, { type: 'complete' }]
-      setCards(withComplete)
-
-      savePendingSession({
-        id: newId,
-        title: fetchedTitle,
-        source: src,
-        lang,
-        readMode,
-        cards: withComplete,
-        sourceText: text,
-      }).catch(console.error)
-
-      setView('learning')
-      setAiSummaryLoading(true)
-      setAiRelatedLoading(true)
-      generateAISummary(text, lang)
-        .then(bullets => setAiSummaryBullets(bullets))
-        .catch(() => setAiSummaryBullets([]))
-        .finally(() => setAiSummaryLoading(false))
-      findRelated(text, lang)
-        .then(links => setAiRelatedLinks(links))
-        .catch(() => setAiRelatedLinks([]))
-        .finally(() => setAiRelatedLoading(false))
+      await savePendingSession({ id: newId, title: fetchedTitle, source: src, lang, readMode: 'deep', cards: withComplete, sourceText: text })
+      setArchiveRefreshKey(k => k + 1)
     } catch (e) {
       console.error(e)
-      setView('home')
+    } finally {
+      setGeneratingCount(c => c - 1)
     }
   }
 
   async function handleLogout() {
     if (supabase) await supabase.auth.signOut()
     setAuthed(false)
+  }
+
+  // 在 loading 时点 Archive → 切走，后台继续
+  function handleArchiveClick() {
+    if (view === 'loading') userIsWaiting.current = false
+    setView('archive')
   }
 
   if (authed === null) {
@@ -201,15 +196,18 @@ export default function App() {
       <Header
         lang={lang}
         setLang={setLang}
-        onArchive={() => setView('archive')}
+        onArchive={handleArchiveClick}
         onLogout={supabase ? handleLogout : undefined}
+        generatingCount={generatingCount}
         t={t}
       />
       <main className="pt-14">
         {view === 'home' && (
           <HomeView onSubmit={handleSubmit} t={t} />
         )}
-        {view === 'loading' && <LoadingView t={t} />}
+        {view === 'loading' && (
+          <LoadingView onBackground={goBackground} t={t} />
+        )}
         {view === 'learning' && cards.length > 0 && (
           <LearningView
             cards={cards}
@@ -249,6 +247,7 @@ export default function App() {
         )}
         {view === 'archive' && (
           <ArchiveView
+            refreshKey={archiveRefreshKey}
             onBack={() => setView('home')}
             onReplay={handleReplay}
             onStartPending={handleStartPending}

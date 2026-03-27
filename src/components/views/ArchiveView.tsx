@@ -6,6 +6,7 @@ import { loadSessions, deleteSession, loadReadLater, deleteReadLater, loadPendin
 type Tab = 'learned' | 'read-later'
 
 interface Props {
+  refreshKey?: number
   onBack: () => void
   onReplay: (cards: Card[]) => void
   onStartPending: (entry: ArchiveEntry) => void
@@ -76,7 +77,7 @@ function SessionDetail({ entry, onBack, onReplay, onDelete, t }: {
   )
 }
 
-export default function ArchiveView({ onBack, onReplay, onStartPending, onLearnFromUrl, t }: Props) {
+export default function ArchiveView({ refreshKey, onBack, onReplay, onStartPending, onLearnFromUrl, t }: Props) {
   const [tab, setTab] = useState<Tab>('learned')
   const [sessions, setSessions] = useState<ArchiveEntry[]>([])
   const [pending, setPending] = useState<ArchiveEntry[]>([])
@@ -86,13 +87,14 @@ export default function ArchiveView({ onBack, onReplay, onStartPending, onLearnF
   const [learningId, setLearningId] = useState<string | null>(null)
 
   useEffect(() => {
+    setLoading(true)
     Promise.all([loadSessions(), loadPendingSessions(), loadReadLater()]).then(([s, p, r]) => {
       setSessions(s)
       setPending(p)
       setReadLater(r)
       setLoading(false)
     })
-  }, [])
+  }, [refreshKey])
 
   async function deleteEntry(id: string) {
     await deleteSession(id)

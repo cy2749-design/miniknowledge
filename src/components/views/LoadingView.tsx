@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 
 interface Props {
+  onBackground: () => void
   t: (key: string) => string
 }
 
 const STEPS = ['loading.step1', 'loading.step2', 'loading.step3', 'loading.step4']
 
-export default function LoadingView({ t }: Props) {
+export default function LoadingView({ onBackground, t }: Props) {
   const [step, setStep] = useState(0)
 
   useEffect(() => {
@@ -39,6 +40,12 @@ export default function LoadingView({ t }: Props) {
             </div>
           ))}
         </div>
+        <button
+          onClick={onBackground}
+          className="mt-8 text-xs text-gray-400 hover:text-gray-600 transition-colors underline underline-offset-2"
+        >
+          {t('loading.background')}
+        </button>
       </div>
     </div>
   )

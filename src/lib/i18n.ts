@@ -5,6 +5,7 @@ const translations = {
     // Header
     'header.logo': 'MiniKnowledge',
     'header.archive': 'Archive',
+    'header.generating': 'Generating…',
 
     // Home
     'home.title': 'Long reads, short cards.',
@@ -30,6 +31,7 @@ const translations = {
     'loading.step3': 'Creating learning cards...',
     'loading.step4': 'Preparing your session...',
     'loading.title': 'Building your learning experience',
+    'loading.background': 'Go do something else, I'll notify you when it's ready →',
 
     // Learning
     'learning.progress': 'Card {current} of {total}',
@@ -125,6 +127,7 @@ const translations = {
     // Header
     'header.logo': 'MiniKnowledge',
     'header.archive': '学习记录',
+    'header.generating': '生成中…',
 
     // Home
     'home.title': '把复杂内容，拆成你记得住的卡片',
@@ -150,6 +153,7 @@ const translations = {
     'loading.step3': '生成学习卡片...',
     'loading.step4': '准备学习会话...',
     'loading.title': '正在为你构建学习体验',
+    'loading.background': '去做别的吧，生成好了学习记录里会出现 →',
 
     // Learning
     'learning.progress': '第 {current} 张，共 {total} 张',
