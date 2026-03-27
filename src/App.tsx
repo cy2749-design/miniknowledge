@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useLanguage } from './hooks/useLanguage'
 import { generateCards, generateAISummary, findRelated } from './utils/generateCards'
-import type { ViewId, Card, Answers, Source, ReadMode, ArchiveEntry } from './types'
+import type { ViewId, Card, Answers, Source, ArchiveEntry } from './types'
 import { supabase } from './lib/supabase'
 import { savePendingSession } from './lib/db'
 
@@ -37,7 +37,6 @@ export default function App() {
   const [sessionId, setSessionId] = useState<string>(genId)
   const [sourceText, setSourceText] = useState('')
   const [source, setSource] = useState<Source>({ type: 'text', title: '' })
-  const [readMode, setReadMode] = useState<ReadMode>('deep')
   const [cards, setCards] = useState<Card[]>([])
   const [answers, setAnswers] = useState<Answers>({})
 
@@ -110,7 +109,7 @@ export default function App() {
     setSessionId(entry.id)
     setSourceText(entry.sourceText ?? '')
     setSource({ type: entry.sourceType, title: entry.title, url: entry.sourceUrl, readMode: entry.readMode })
-    setReadMode(entry.readMode ?? 'deep')
+
     setCards(entry.cards ?? [])
     setAnswers({})
     setAiSummaryBullets(entry.bulletPoints ?? [])
