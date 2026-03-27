@@ -76,7 +76,7 @@ export default function App() {
         setSessionId(newId)
         setSourceText(text)
         setSource(src)
-        setReadMode(mode)
+
         setCards(withComplete)
         setView('learning')
         savePendingSession({ id: newId, title: src.title, source: src, lang, readMode: mode, cards: withComplete, sourceText: text }).catch(console.error)
