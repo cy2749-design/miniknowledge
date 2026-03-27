@@ -4,11 +4,15 @@ export type ViewId = 'home' | 'loading' | 'learning' | 'ai-summary' | 'summary' 
 // ─── Language ────────────────────────────────────────────────────────────────
 export type Lang = 'en' | 'zh'
 
+// ─── Read Mode ───────────────────────────────────────────────────────────────
+export type ReadMode = 'skim' | 'deep'
+
 // ─── Source ──────────────────────────────────────────────────────────────────
 export interface Source {
   type: 'url' | 'text'
   title: string
   url?: string
+  readMode?: ReadMode
 }
 
 // ─── Card Types ──────────────────────────────────────────────────────────────
@@ -106,7 +110,11 @@ export interface ArchiveEntry {
   score: number
   total: number
   cards?: Card[]
-  bulletPoints?: string[]  // AI-generated bullet point summary
+  bulletPoints?: string[]
+  status?: 'pending' | 'completed'
+  sourceText?: string  // stored locally for chatbot context
+  lang?: Lang
+  readMode?: ReadMode
 }
 
 // ─── Read Later Entry ────────────────────────────────────────────────────────

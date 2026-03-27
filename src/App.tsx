@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useLanguage } from './hooks/useLanguage'
 import { generateCards, generateAISummary, findRelated } from './utils/generateCards'
-import type { ViewId, Card, Answers, Source } from './types'
+import type { ViewId, Card, Answers, Source, ReadMode, ArchiveEntry } from './types'
 import { supabase } from './lib/supabase'
+import { savePendingSession } from './lib/db'
 
 import Header from './components/ui/Header'
 import HomeView from './components/views/HomeView'
@@ -33,9 +34,10 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  const [sessionId] = useState(genId)
+  const [sessionId, setSessionId] = useState(genId)
   const [sourceText, setSourceText] = useState('')
   const [source, setSource] = useState<Source>({ type: 'text', title: '' })
+  const [readMode, setReadMode] = useState<ReadMode>('deep')
   const [cards, setCards] = useState<Card[]>([])
   const [answers, setAnswers] = useState<Answers>({})
 
@@ -45,18 +47,32 @@ export default function App() {
   const [aiRelatedLoading, setAiRelatedLoading] = useState(false)
 
   async function handleSubmit(text: string, src: Source) {
+    const newId = genId()
+    setSessionId(newId)
     setSourceText(text)
     setSource(src)
+    setReadMode(src.readMode ?? 'deep')
     setCards([])
     setAnswers({})
     setAiSummaryBullets([])
     setView('loading')
     try {
-      const generated = await generateCards(text, lang)
+      const generated = await generateCards(text, lang, src.readMode ?? 'deep')
       const withComplete: Card[] = [...generated, { type: 'complete' }]
       setCards(withComplete)
+
+      // Auto-save as pending so user can study later even if they exit
+      savePendingSession({
+        id: newId,
+        title: src.title,
+        source: src,
+        lang,
+        readMode: src.readMode ?? 'deep',
+        cards: withComplete,
+        sourceText: text,
+      }).catch(console.error)
+
       setView('learning')
-      // Start AI summary + related articles in background while user answers cards
       setAiSummaryLoading(true)
       setAiRelatedLoading(true)
       generateAISummary(text, lang)
@@ -70,6 +86,27 @@ export default function App() {
     } catch (e) {
       console.error(e)
       setView('home')
+    }
+  }
+
+  // Start a previously queued (pending) session from Archive
+  function handleStartPending(entry: ArchiveEntry) {
+    setSessionId(entry.id)
+    setSourceText(entry.sourceText ?? '')
+    setSource({ type: entry.sourceType, title: entry.title, url: entry.sourceUrl, readMode: entry.readMode })
+    setReadMode(entry.readMode ?? 'deep')
+    setCards(entry.cards ?? [])
+    setAnswers({})
+    setAiSummaryBullets(entry.bulletPoints ?? [])
+    setAiRelatedLinks([])
+    setView('learning')
+    // Kick off AI summary in background if not already available
+    if (!entry.bulletPoints?.length && entry.sourceText) {
+      setAiSummaryLoading(true)
+      generateAISummary(entry.sourceText, entry.lang ?? lang)
+        .then(bullets => setAiSummaryBullets(bullets))
+        .catch(() => {})
+        .finally(() => setAiSummaryLoading(false))
     }
   }
 
@@ -96,6 +133,8 @@ export default function App() {
   }
 
   async function handleLearnFromUrl(url: string, title: string) {
+    const newId = genId()
+    setSessionId(newId)
     setView('loading')
     setCards([])
     setAnswers({})
@@ -110,12 +149,23 @@ export default function App() {
       const data = await res.json()
       const text = data.text as string
       const fetchedTitle = (data.title as string) || title
-      const src: Source = { type: 'url', url, title: fetchedTitle }
+      const src: Source = { type: 'url', url, title: fetchedTitle, readMode }
       setSourceText(text)
       setSource(src)
-      const generated = await generateCards(text, lang)
+      const generated = await generateCards(text, lang, readMode)
       const withComplete: Card[] = [...generated, { type: 'complete' }]
       setCards(withComplete)
+
+      savePendingSession({
+        id: newId,
+        title: fetchedTitle,
+        source: src,
+        lang,
+        readMode,
+        cards: withComplete,
+        sourceText: text,
+      }).catch(console.error)
+
       setView('learning')
       setAiSummaryLoading(true)
       setAiRelatedLoading(true)
@@ -164,6 +214,8 @@ export default function App() {
           <LearningView
             cards={cards}
             answers={answers}
+            sourceText={sourceText}
+            lang={lang}
             onAnswer={handleAnswer}
             onComplete={handleLearningComplete}
             t={t}
@@ -199,6 +251,7 @@ export default function App() {
           <ArchiveView
             onBack={() => setView('home')}
             onReplay={handleReplay}
+            onStartPending={handleStartPending}
             onLearnFromUrl={handleLearnFromUrl}
             t={t}
           />

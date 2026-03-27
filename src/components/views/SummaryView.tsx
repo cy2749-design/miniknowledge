@@ -61,7 +61,7 @@ export default function SummaryView({ cards, answers, sessionId, title, source, 
 
         {bulletPoints && bulletPoints.length > 0 && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-4">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Key Takeaways</h2>
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">{t('archive.key_takeaways')}</h2>
             <ul className="flex flex-col gap-2">
               {bulletPoints.map((b, i) => (
                 <li key={i} className="flex gap-2 text-sm text-gray-700">

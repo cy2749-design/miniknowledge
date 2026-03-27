@@ -1,13 +1,14 @@
-import { Trash2, RotateCcw, ArrowLeft, Loader2, ExternalLink, BookOpen, Clock, ChevronRight, GraduationCap } from 'lucide-react'
+import { Trash2, RotateCcw, ArrowLeft, Loader2, ExternalLink, BookOpen, Clock, ChevronRight, GraduationCap, PlayCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import type { ArchiveEntry, ReadLaterEntry, Card } from '../../types'
-import { loadSessions, deleteSession, loadReadLater, deleteReadLater } from '../../lib/db'
+import { loadSessions, deleteSession, loadReadLater, deleteReadLater, loadPendingSessions, deletePendingSession } from '../../lib/db'
 
 type Tab = 'learned' | 'read-later'
 
 interface Props {
   onBack: () => void
   onReplay: (cards: Card[]) => void
+  onStartPending: (entry: ArchiveEntry) => void
   onLearnFromUrl: (url: string, title: string) => void
   t: (key: string) => string
 }
@@ -75,17 +76,19 @@ function SessionDetail({ entry, onBack, onReplay, onDelete, t }: {
   )
 }
 
-export default function ArchiveView({ onBack, onReplay, onLearnFromUrl, t }: Props) {
+export default function ArchiveView({ onBack, onReplay, onStartPending, onLearnFromUrl, t }: Props) {
   const [tab, setTab] = useState<Tab>('learned')
   const [sessions, setSessions] = useState<ArchiveEntry[]>([])
+  const [pending, setPending] = useState<ArchiveEntry[]>([])
   const [readLater, setReadLater] = useState<ReadLaterEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedSession, setSelectedSession] = useState<ArchiveEntry | null>(null)
   const [learningId, setLearningId] = useState<string | null>(null)
 
   useEffect(() => {
-    Promise.all([loadSessions(), loadReadLater()]).then(([s, r]) => {
+    Promise.all([loadSessions(), loadPendingSessions(), loadReadLater()]).then(([s, p, r]) => {
       setSessions(s)
+      setPending(p)
       setReadLater(r)
       setLoading(false)
     })
@@ -94,6 +97,11 @@ export default function ArchiveView({ onBack, onReplay, onLearnFromUrl, t }: Pro
   async function deleteEntry(id: string) {
     await deleteSession(id)
     setSessions(prev => prev.filter(e => e.id !== id))
+  }
+
+  async function deletePending(id: string) {
+    await deletePendingSession(id)
+    setPending(prev => prev.filter(e => e.id !== id))
   }
 
   async function deleteReadLaterEntry(id: string) {
@@ -156,12 +164,51 @@ export default function ArchiveView({ onBack, onReplay, onLearnFromUrl, t }: Pro
             <Loader2 size={18} className="animate-spin" />
           </div>
         ) : tab === 'learned' ? (
-          sessions.length === 0 ? (
+          sessions.length === 0 && pending.length === 0 ? (
             <div className="text-center py-20 text-gray-400">
               <p className="text-lg">{t('archive.empty')}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
+              {/* Pending / queued sessions */}
+              {pending.length > 0 && (
+                <>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">{t('archive.queued')}</p>
+                  {pending.map(entry => (
+                    <div key={entry.id} className="bg-amber-50 rounded-2xl border border-amber-200 shadow-sm p-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">
+                              {entry.readMode ? t(`archive.mode.${entry.readMode}`) : ''}
+                            </span>
+                            <span className="text-xs text-gray-400">{new Date(entry.date).toLocaleDateString()}</span>
+                          </div>
+                          <p className="font-semibold text-gray-900 truncate">{entry.title}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">{entry.cards?.length ?? 0} cards</p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => onStartPending(entry)}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-gray-900 text-white text-xs font-semibold rounded-xl transition-colors hover:bg-gray-700"
+                          >
+                            <PlayCircle size={13} />{t('archive.start')}
+                          </button>
+                          <button
+                            onClick={() => deletePending(entry.id)}
+                            className="p-2 rounded-xl hover:bg-red-50 text-red-400 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {sessions.length > 0 && (
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1 mt-2">{t('archive.tab.learned')}</p>
+                  )}
+                </>
+              )}
               {sessions.map(entry => (
                 <button
                   key={entry.id}

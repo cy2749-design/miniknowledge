@@ -3,10 +3,11 @@
  * Uses Supabase when env vars are set, falls back to localStorage silently.
  */
 import { supabase } from './supabase'
-import type { Card, Answers, ArchiveEntry, ReadLaterEntry, Source, Lang } from '../types'
+import type { Card, Answers, ArchiveEntry, ReadLaterEntry, Source, Lang, ReadMode } from '../types'
 
 const LOCAL_KEY = 'mk-archive'
 const READ_LATER_KEY = 'mk-read-later'
+const PENDING_KEY = 'mk-pending'
 
 function getLocal(): ArchiveEntry[] {
   try { return JSON.parse(localStorage.getItem(LOCAL_KEY) ?? '[]') } catch { return [] }
@@ -20,6 +21,76 @@ function getReadLaterLocal(): ReadLaterEntry[] {
 }
 function setReadLaterLocal(entries: ReadLaterEntry[]) {
   localStorage.setItem(READ_LATER_KEY, JSON.stringify(entries))
+}
+
+function getPendingLocal(): ArchiveEntry[] {
+  try { return JSON.parse(localStorage.getItem(PENDING_KEY) ?? '[]') } catch { return [] }
+}
+function setPendingLocal(entries: ArchiveEntry[]) {
+  localStorage.setItem(PENDING_KEY, JSON.stringify(entries))
+}
+
+// ─── Save pending session (immediately after generation) ──────────────────────
+export async function savePendingSession(params: {
+  id: string
+  title: string
+  source: Source
+  lang: Lang
+  readMode: ReadMode
+  cards: Card[]
+  sourceText: string
+}): Promise<void> {
+  const { id, title, source, lang, readMode, cards, sourceText } = params
+
+  const entry: ArchiveEntry = {
+    id, title,
+    sourceType: source.type,
+    sourceUrl: source.url,
+    date: new Date().toISOString(),
+    score: 0,
+    total: 0,
+    cards,
+    status: 'pending',
+    sourceText,
+    lang,
+    readMode,
+  }
+  setPendingLocal([entry, ...getPendingLocal().filter(e => e.id !== id)])
+
+  if (!supabase) return
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  await supabase.from('learning_sessions').upsert({
+    id,
+    user_id: user.id,
+    title,
+    source_type: source.type,
+    source_url: source.url ?? null,
+    language: lang,
+    status: 'pending',
+  })
+
+  const cardRows = cards.map((card, i) => ({
+    session_id: id,
+    card_index: i,
+    card_type: card.type,
+    card_data: card as unknown as Record<string, unknown>,
+  }))
+  await supabase.from('session_cards').upsert(cardRows)
+}
+
+// ─── Load pending sessions ────────────────────────────────────────────────────
+export async function loadPendingSessions(): Promise<ArchiveEntry[]> {
+  return getPendingLocal()
+}
+
+// ─── Delete pending session ───────────────────────────────────────────────────
+export async function deletePendingSession(id: string): Promise<void> {
+  setPendingLocal(getPendingLocal().filter(e => e.id !== id))
+  if (!supabase) return
+  await supabase.from('learning_sessions').delete().eq('id', id).eq('status', 'pending')
 }
 
 // ─── Save completed session ───────────────────────────────────────────────────
@@ -36,12 +107,16 @@ export async function saveSession(params: {
 }): Promise<void> {
   const { id, title, source, lang, cards, score, total, bulletPoints } = params
 
+  // Remove from pending (session is now completed)
+  setPendingLocal(getPendingLocal().filter(e => e.id !== id))
+
   const entry: ArchiveEntry = {
     id, title,
     sourceType: source.type,
     sourceUrl: source.url,
     date: new Date().toISOString(),
     score, total, cards, bulletPoints,
+    status: 'completed',
   }
   setLocal([entry, ...getLocal().filter(e => e.id !== id)])
 
@@ -110,6 +185,7 @@ export async function loadSessions(): Promise<ArchiveEntry[]> {
     date: row.created_at,
     score: row.score ?? 0,
     total: row.total_quiz ?? 0,
+    status: 'completed' as const,
     cards: (row.session_cards ?? [])
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .sort((a: any, b: any) => a.card_index - b.card_index)

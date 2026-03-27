@@ -1,13 +1,14 @@
-import type { Card } from '../types'
+import type { Card, ReadMode } from '../types'
 
 export async function generateCards(
   text: string,
-  lang: string
+  lang: string,
+  readMode: ReadMode = 'deep'
 ): Promise<Card[]> {
   const res = await fetch('/api/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mode: 'cards', text, lang }),
+    body: JSON.stringify({ mode: 'cards', text, lang, readMode }),
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }))
@@ -43,4 +44,19 @@ export async function findRelated(
   if (!res.ok) throw new Error('Failed to find related articles')
   const data = await res.json()
   return data.links
+}
+
+export async function chatWithAI(
+  messages: { role: 'user' | 'assistant'; content: string }[],
+  context: string,
+  lang: string
+): Promise<string> {
+  const res = await fetch('/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode: 'chat', messages, context, lang }),
+  })
+  if (!res.ok) throw new Error('Chat failed')
+  const data = await res.json()
+  return data.reply as string
 }

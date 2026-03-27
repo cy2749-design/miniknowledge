@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { Link2, FileText, Loader2, Sparkles } from 'lucide-react'
 import { motion } from 'motion/react'
-import type { Source } from '../../types'
+import type { Source, ReadMode } from '../../types'
 import { fetchArticle } from '../../utils/fetchArticle'
 
 interface Props {
@@ -14,6 +14,7 @@ type Tab = 'url' | 'text'
 export default function HomeView({ onSubmit, t }: Props) {
   const [tab, setTab] = useState<Tab>('url')
   const [value, setValue] = useState('')
+  const [readMode, setReadMode] = useState<ReadMode>('deep')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const textRef = useRef<HTMLTextAreaElement>(null)
@@ -26,10 +27,10 @@ export default function HomeView({ onSubmit, t }: Props) {
     try {
       if (tab === 'url') {
         const { title, text } = await fetchArticle(trimmed)
-        onSubmit(text, { type: 'url', title, url: trimmed })
+        onSubmit(text, { type: 'url', title, url: trimmed, readMode })
       } else {
         const title = trimmed.slice(0, 60) + (trimmed.length > 60 ? '...' : '')
-        onSubmit(trimmed, { type: 'text', title })
+        onSubmit(trimmed, { type: 'text', title, readMode })
       }
     } catch {
       setError(t('home.error.fetch'))
@@ -62,7 +63,8 @@ export default function HomeView({ onSubmit, t }: Props) {
           transition={{ duration: 0.5, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
           className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-white/60 p-6"
         >
-          <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5">
+          {/* URL / Text tab */}
+          <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-4">
             {(['url', 'text'] as Tab[]).map(tabId => (
               <button
                 key={tabId}
@@ -77,6 +79,7 @@ export default function HomeView({ onSubmit, t }: Props) {
             ))}
           </div>
 
+          {/* Input */}
           {tab === 'url' ? (
             <input
               type="url"
@@ -98,6 +101,26 @@ export default function HomeView({ onSubmit, t }: Props) {
           )}
 
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+
+          {/* Read mode selector */}
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {(['skim', 'deep'] as ReadMode[]).map(mode => (
+              <button
+                key={mode}
+                onClick={() => setReadMode(mode)}
+                className={`flex flex-col items-start px-4 py-3 rounded-xl border-2 transition-all text-left ${
+                  readMode === mode
+                    ? 'border-gray-900 bg-gray-900 text-white'
+                    : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <span className="font-semibold text-sm">{t(`home.mode.${mode}`)}</span>
+                <span className={`text-xs mt-0.5 ${readMode === mode ? 'text-gray-300' : 'text-gray-400'}`}>
+                  {t(`home.mode.${mode}_desc`)}
+                </span>
+              </button>
+            ))}
+          </div>
 
           <button
             onClick={handleSubmit}

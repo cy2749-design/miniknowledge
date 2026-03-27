@@ -19,6 +19,10 @@ const translations = {
     'home.submitting': 'Analyzing...',
     'home.error.empty': 'Please enter a URL or some text.',
     'home.error.fetch': 'Failed to fetch article. Try pasting the text directly.',
+    'home.mode.skim': 'Quick Read',
+    'home.mode.skim_desc': 'Core concepts · 6–10 cards',
+    'home.mode.deep': 'Deep Read',
+    'home.mode.deep_desc': 'Full analysis · 12–20 cards',
 
     // Loading
     'loading.step1': 'Fetching content...',
@@ -83,6 +87,17 @@ const translations = {
     'archive.key_takeaways': 'Key Takeaways',
     'archive.no_takeaways': 'No key takeaways recorded.',
     'archive.takeaways_count': 'takeaways',
+    'archive.queued': 'Queued',
+    'archive.start': 'Start Learning',
+    'archive.mode.skim': 'Quick',
+    'archive.mode.deep': 'Deep',
+
+    // Chat
+    'chat.toggle': 'Ask AI',
+    'chat.placeholder': 'Ask anything about this article...',
+    'chat.send': 'Send',
+    'chat.thinking': 'Thinking...',
+    'chat.label': 'AI Tutor · temporary',
 
     // Complete card
     'complete.title': 'Well done!',
@@ -124,6 +139,10 @@ const translations = {
     'home.submitting': '分析中...',
     'home.error.empty': '请输入链接或文字。',
     'home.error.fetch': '抓取文章失败，请直接粘贴文字内容。',
+    'home.mode.skim': '略读',
+    'home.mode.skim_desc': '核心概念 · 6–10 张',
+    'home.mode.deep': '精读',
+    'home.mode.deep_desc': '深度分析 · 12–20 张',
 
     // Loading
     'loading.step1': '获取内容中...',
@@ -188,6 +207,17 @@ const translations = {
     'archive.key_takeaways': '核心要点',
     'archive.no_takeaways': '暂无记录的要点。',
     'archive.takeaways_count': '个要点',
+    'archive.queued': '待学习',
+    'archive.start': '开始学习',
+    'archive.mode.skim': '略读',
+    'archive.mode.deep': '精读',
+
+    // Chat
+    'chat.toggle': '问 AI',
+    'chat.placeholder': '对文章内容有疑问？直接问...',
+    'chat.send': '发送',
+    'chat.thinking': '思考中...',
+    'chat.label': 'AI 助教 · 临时对话',
 
     // Complete card
     'complete.title': '太棒了！',
