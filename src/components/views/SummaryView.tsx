@@ -1,5 +1,5 @@
-import { Trophy, RotateCcw, BookMarked, Check } from 'lucide-react'
-import { useState } from 'react'
+import { Trophy, RotateCcw } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import type { Card, Answers, Source, Lang } from '../../types'
 import { saveSession } from '../../lib/db'
 
@@ -17,26 +17,19 @@ interface Props {
 }
 
 export default function SummaryView({ cards, answers, sessionId, title, source, lang, bulletPoints, onRestart, onReviewCards, t }: Props) {
-  const [saved, setSaved] = useState(false)
-  const [saving, setSaving] = useState(false)
+  const saved = useRef(false)
 
   const quizCards = cards.filter(c => c.type === 'quiz' || c.type === 'review' || c.type === 'trueFalse' || c.type === 'output')
-  const correctCount = quizCards.filter(c => {
-    const cardIdx = cards.indexOf(c)
-    return answers[cardIdx]?.correct
-  }).length
+  const correctCount = quizCards.filter(c => answers[cards.indexOf(c)]?.correct).length
   const total = quizCards.length
   const pct = total > 0 ? Math.round((correctCount / total) * 100) : 0
 
-  async function saveToArchive() {
-    setSaving(true)
-    await saveSession({
-      id: sessionId, title, source, lang, cards, answers,
-      score: correctCount, total, bulletPoints,
-    })
-    setSaved(true)
-    setSaving(false)
-  }
+  useEffect(() => {
+    if (saved.current) return
+    saved.current = true
+    saveSession({ id: sessionId, title, source, lang, cards, answers, score: correctCount, total, bulletPoints })
+      .catch(console.error)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-20">
@@ -74,13 +67,6 @@ export default function SummaryView({ cards, answers, sessionId, title, source, 
         )}
 
         <div className="flex flex-col gap-3">
-          <button
-            onClick={saveToArchive}
-            disabled={saved || saving}
-            className="w-full py-3 border-2 border-gray-900 text-gray-900 font-semibold rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-          >
-            {saved ? <><Check size={16} />{t('summary.saved')}</> : saving ? <><BookMarked size={16} className="animate-pulse" />...</> : <><BookMarked size={16} />{t('summary.save')}</>}
-          </button>
           <button onClick={onReviewCards} className="w-full py-3 border-2 border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
             <RotateCcw size={16} />{t('summary.review_again')}
           </button>

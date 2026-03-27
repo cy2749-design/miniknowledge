@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 const DASHSCOPE_BASE = 'https://coding.dashscope.aliyuncs.com/v1'
-const MODEL = 'kimi-k2.5'
+const MODEL = 'glm-5'
 
 const CARDS_PROMPT_EN = (readMode: 'skim' | 'deep') => {
   const modeRule = readMode === 'skim'
