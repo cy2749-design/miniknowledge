@@ -31,7 +31,7 @@ const translations = {
     'loading.step3': 'Creating learning cards...',
     'loading.step4': 'Preparing your session...',
     'loading.title': 'Building your learning experience',
-    'loading.background': 'Go do something else, I'll notify you when it's ready →',
+    'loading.background': "Go do something else — it'll appear in your archive when ready →",
 
     // Learning
     'learning.progress': 'Card {current} of {total}',
