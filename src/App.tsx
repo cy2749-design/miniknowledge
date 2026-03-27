@@ -34,7 +34,7 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  const [sessionId, setSessionId] = useState(genId)
+  const [sessionId, setSessionId] = useState<string>(genId)
   const [sourceText, setSourceText] = useState('')
   const [source, setSource] = useState<Source>({ type: 'text', title: '' })
   const [readMode, setReadMode] = useState<ReadMode>('deep')
