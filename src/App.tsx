@@ -113,12 +113,19 @@ export default function App() {
     setAiSummaryBullets(entry.bulletPoints ?? [])
     setAiRelatedLinks([])
     setView('learning')
-    if (!entry.bulletPoints?.length && entry.sourceText) {
-      setAiSummaryLoading(true)
-      generateAISummary(entry.sourceText, entry.lang ?? lang)
-        .then(bullets => setAiSummaryBullets(bullets))
+    if (entry.sourceText) {
+      if (!entry.bulletPoints?.length) {
+        setAiSummaryLoading(true)
+        generateAISummary(entry.sourceText, entry.lang ?? lang)
+          .then(bullets => setAiSummaryBullets(bullets))
+          .catch(() => {})
+          .finally(() => setAiSummaryLoading(false))
+      }
+      setAiRelatedLoading(true)
+      findRelated(entry.sourceText, entry.lang ?? lang)
+        .then(links => setAiRelatedLinks(links))
         .catch(() => {})
-        .finally(() => setAiSummaryLoading(false))
+        .finally(() => setAiRelatedLoading(false))
     }
   }
 

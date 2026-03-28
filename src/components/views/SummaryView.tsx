@@ -22,7 +22,6 @@ export default function SummaryView({ cards, answers, sessionId, title, source, 
   const quizCards = cards.filter(c => c.type === 'quiz' || c.type === 'review' || c.type === 'trueFalse' || c.type === 'output')
   const correctCount = quizCards.filter(c => answers[cards.indexOf(c)]?.correct).length
   const total = quizCards.length
-  const pct = total > 0 ? Math.round((correctCount / total) * 100) : 0
 
   useEffect(() => {
     if (saved.current) return
@@ -39,17 +38,6 @@ export default function SummaryView({ cards, answers, sessionId, title, source, 
             <Trophy className="text-white" size={36} />
           </div>
           <h1 className="text-3xl font-extrabold text-gray-900">{t('summary.title')}</h1>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-4">
-          <div className="text-center mb-4">
-            <p className="text-sm text-gray-500 mb-1">{t('summary.score')}</p>
-            <p className="text-4xl font-black text-gray-900">{correctCount}<span className="text-lg font-normal text-gray-400">/{total}</span></p>
-          </div>
-          <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-gray-700 to-gray-900 rounded-full transition-all duration-1000" style={{ width: `${pct}%` }} />
-          </div>
-          <p className="text-sm text-gray-500 mt-2 text-center">{t('summary.mastery')} {pct}%</p>
         </div>
 
         {bulletPoints && bulletPoints.length > 0 && (
