@@ -177,8 +177,9 @@ export default function ArchiveView({ refreshKey, onBack, onReplay, onStartPendi
                 <>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">{t('archive.queued')}</p>
                   {pending.map(entry => {
-                    const isGenerating = entry.status === 'generating'
-                    const isFailed = entry.status === 'failed'
+                    const timedOut = entry.status === 'generating' && (Date.now() - new Date(entry.date).getTime()) > 10 * 60 * 1000
+                    const isGenerating = entry.status === 'generating' && !timedOut
+                    const isFailed = entry.status === 'failed' || timedOut
                     return (
                       <div key={entry.id} className={`rounded-2xl border shadow-sm p-5 ${
                         isFailed ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'
