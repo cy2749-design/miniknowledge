@@ -104,14 +104,7 @@ export default function AuthView({ onAuth, t }: Props) {
             </button>
           </div>
 
-          <div className="mt-4 border-t border-gray-100 pt-4">
-            <button
-              onClick={onAuth}
-              className="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              {t('auth.skip')}
-            </button>
-          </div>
+
         </div>
       </div>
     </div>
