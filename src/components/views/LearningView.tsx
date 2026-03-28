@@ -42,7 +42,6 @@ export default function LearningView({ cards, answers, sourceText, lang, onAnswe
   const card = cards[idx]
   const answered = isInteractive(card) ? answers[idx] !== undefined : true
   const isLast = idx === cards.length - 1
-  const showChat = true
 
   const advance = useCallback(() => {
     if (isLast) { onComplete(); return }

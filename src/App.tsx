@@ -247,7 +247,6 @@ export default function App() {
         {view === 'summary' && (
           <SummaryView
             cards={cards}
-            answers={answers}
             sessionId={sessionId}
             title={source.title}
             source={source}
