@@ -2,7 +2,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 const DASHSCOPE_BASE = 'https://coding.dashscope.aliyuncs.com/v1'
 const MODEL = 'glm-5'
-const SEARCH_MODEL = 'kimi-k2.5'
+const QWEN_BASE = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+const SEARCH_MODEL = 'qwen3.5-plus'
 
 const CARDS_PROMPT_EN = (readMode: 'skim' | 'deep') => {
   const modeRule = readMode === 'skim'
@@ -198,51 +199,31 @@ async function callDashScopeWithSearch(systemPrompt: string, userContent: string
   const apiKey = process.env.DASHSCOPE_API_KEY
   if (!apiKey) throw new Error('DASHSCOPE_API_KEY not set')
 
-  const tools = [{ type: 'builtin_function', function: { name: '$web_search' } }]
-  let messages: { role: string; content: string; tool_call_id?: string; name?: string }[] = [
-    { role: 'system', content: systemPrompt },
-    { role: 'user', content: userContent },
-  ]
+  const res = await fetchWithTimeout(`${QWEN_BASE}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: SEARCH_MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent },
+      ],
+      max_tokens: 4000,
+      temperature: 0.7,
+      enable_search: true,
+    }),
+  })
 
-  for (let i = 0; i < 10; i++) {
-    const res = await fetchWithTimeout(`${DASHSCOPE_BASE}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: SEARCH_MODEL,
-        messages,
-        tools,
-        max_tokens: 4000,
-        temperature: 0.7,
-      }),
-    })
-
-    if (!res.ok) {
-      const err = await res.text()
-      throw new Error(`DashScope error ${res.status}: ${err}`)
-    }
-
-    const json = await res.json()
-    const choice = json.choices?.[0]
-    if (!choice) throw new Error('No response from model')
-
-    const msg = choice.message
-    messages.push(msg)
-
-    if (choice.finish_reason === 'tool_calls' && msg.tool_calls?.length) {
-      for (const tc of msg.tool_calls) {
-        messages.push({ role: 'tool', tool_call_id: tc.id, content: '' })
-      }
-      continue
-    }
-
-    return msg.content ?? ''
+  if (!res.ok) {
+    const err = await res.text()
+    throw new Error(`DashScope error ${res.status}: ${err}`)
   }
 
-  throw new Error('Max tool call iterations reached')
+  const json = await res.json()
+  return json.choices?.[0]?.message?.content ?? ''
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
