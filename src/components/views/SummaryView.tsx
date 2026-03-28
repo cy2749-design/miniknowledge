@@ -22,7 +22,7 @@ export default function SummaryView({ cards, sessionId, title, source, sourceTex
   useEffect(() => {
     if (saved.current) return
     saved.current = true
-    saveSession({ id: sessionId, title, source, sourceText, lang, cards, bulletPoints })
+    saveSession({ id: sessionId, title, source, sourceText, lang, bulletPoints })
       .catch(console.error)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
