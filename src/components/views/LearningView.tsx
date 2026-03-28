@@ -212,7 +212,6 @@ export default function LearningView({ cards, answers, sourceText, lang, onAnswe
                 </div>
               </motion.div>
             )}
-          </div>
         </div>
       </div>
     </div>
