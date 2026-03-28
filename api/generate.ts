@@ -2,6 +2,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 const DASHSCOPE_BASE = 'https://coding.dashscope.aliyuncs.com/v1'
 const MODEL = 'glm-5'
+const QWEN_BASE = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+const SEARCH_MODEL = 'qwen-plus'
 
 const CARDS_PROMPT_EN = (readMode: 'skim' | 'deep') => {
   const modeRule = readMode === 'skim'
@@ -197,21 +199,20 @@ async function callDashScopeWithSearch(systemPrompt: string, userContent: string
   const apiKey = process.env.DASHSCOPE_API_KEY
   if (!apiKey) throw new Error('DASHSCOPE_API_KEY not set')
 
-  const res = await fetchWithTimeout(`${DASHSCOPE_BASE}/chat/completions`, {
+  const res = await fetchWithTimeout(`${QWEN_BASE}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: MODEL,
+      model: SEARCH_MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userContent },
       ],
-      max_tokens: 8000,
+      max_tokens: 4000,
       temperature: 0.7,
-      enable_thinking: false,
       enable_search: true,
     }),
   })
