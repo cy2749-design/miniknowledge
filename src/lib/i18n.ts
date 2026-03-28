@@ -91,6 +91,8 @@ const translations = {
     'archive.takeaways_count': 'takeaways',
     'archive.queued': 'Queued',
     'archive.start': 'Start Learning',
+    'archive.status.generating': 'Generating…',
+    'archive.status.failed': 'Generation failed',
     'archive.mode.skim': 'Quick',
     'archive.mode.deep': 'Deep',
 
@@ -213,6 +215,8 @@ const translations = {
     'archive.takeaways_count': '个要点',
     'archive.queued': '待学习',
     'archive.start': '开始学习',
+    'archive.status.generating': '生成中…',
+    'archive.status.failed': '生成失败',
     'archive.mode.skim': '略读',
     'archive.mode.deep': '精读',
 

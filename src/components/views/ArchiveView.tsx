@@ -172,40 +172,64 @@ export default function ArchiveView({ refreshKey, onBack, onReplay, onStartPendi
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {/* Pending / queued sessions */}
+              {/* Generating / pending / failed sessions */}
               {pending.length > 0 && (
                 <>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">{t('archive.queued')}</p>
-                  {pending.map(entry => (
-                    <div key={entry.id} className="bg-amber-50 rounded-2xl border border-amber-200 shadow-sm p-5">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">
-                              {entry.readMode ? t(`archive.mode.${entry.readMode}`) : ''}
-                            </span>
-                            <span className="text-xs text-gray-400">{new Date(entry.date).toLocaleDateString()}</span>
+                  {pending.map(entry => {
+                    const isGenerating = entry.status === 'generating'
+                    const isFailed = entry.status === 'failed'
+                    return (
+                      <div key={entry.id} className={`rounded-2xl border shadow-sm p-5 ${
+                        isFailed ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'
+                      }`}>
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              {isGenerating && (
+                                <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">
+                                  <Loader2 size={10} className="animate-spin" />{t('archive.status.generating')}
+                                </span>
+                              )}
+                              {isFailed && (
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-600 font-semibold">
+                                  {t('archive.status.failed')}
+                                </span>
+                              )}
+                              {!isGenerating && !isFailed && entry.readMode && (
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">
+                                  {t(`archive.mode.${entry.readMode}`)}
+                                </span>
+                              )}
+                              <span className="text-xs text-gray-400">{new Date(entry.date).toLocaleDateString()}</span>
+                            </div>
+                            <p className="font-semibold text-gray-900 truncate">{entry.title}</p>
+                            {!isGenerating && !isFailed && (
+                              <p className="text-xs text-gray-500 mt-0.5">{entry.cards?.length ?? 0} cards</p>
+                            )}
                           </div>
-                          <p className="font-semibold text-gray-900 truncate">{entry.title}</p>
-                          <p className="text-xs text-gray-500 mt-0.5">{entry.cards?.length ?? 0} cards</p>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            onClick={() => onStartPending(entry)}
-                            className="flex items-center gap-1.5 px-3 py-2 bg-gray-900 text-white text-xs font-semibold rounded-xl transition-colors hover:bg-gray-700"
-                          >
-                            <PlayCircle size={13} />{t('archive.start')}
-                          </button>
-                          <button
-                            onClick={() => deletePending(entry.id)}
-                            className="p-2 rounded-xl hover:bg-red-50 text-red-400 transition-colors"
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          <div className="flex items-center gap-1 shrink-0">
+                            {!isGenerating && !isFailed && (
+                              <button
+                                onClick={() => onStartPending(entry)}
+                                className="flex items-center gap-1.5 px-3 py-2 bg-gray-900 text-white text-xs font-semibold rounded-xl transition-colors hover:bg-gray-700"
+                              >
+                                <PlayCircle size={13} />{t('archive.start')}
+                              </button>
+                            )}
+                            {!isGenerating && (
+                              <button
+                                onClick={() => deletePending(entry.id)}
+                                className="p-2 rounded-xl hover:bg-red-50 text-red-400 transition-colors"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                   {sessions.length > 0 && (
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1 mt-2">{t('archive.tab.learned')}</p>
                   )}

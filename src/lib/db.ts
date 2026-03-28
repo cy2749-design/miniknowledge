@@ -1,5 +1,5 @@
 /**
- * db.ts — 数据层（仅 Supabase，无 localStorage 降级）
+ * db.ts — 数据层（仅 Supabase）
  */
 import { supabase } from './supabase'
 import type { Card, Answers, ArchiveEntry, ReadLaterEntry, Source, Lang, ReadMode } from '../types'
@@ -12,11 +12,48 @@ async function getUser() {
 }
 
 async function ensureProfile(userId: string, email: string | undefined) {
-  const { error } = await supabase!.from('profiles').upsert({ id: userId, email: email ?? null }, { onConflict: 'id' })
+  const { error } = await supabase!.from('profiles').upsert(
+    { id: userId, email: email ?? null },
+    { onConflict: 'id' }
+  )
   if (error) throw new Error(`Profile upsert failed: ${error.message}`)
 }
 
-// ─── 保存 pending 会话 ────────────────────────────────────────────────────────
+// ─── 立即占位（提交时调用）───────────────────────────────────────────────────
+export async function createGeneratingSession(params: {
+  id: string
+  title: string
+  source: Source
+  lang: Lang
+  readMode: ReadMode
+  sourceText: string
+}): Promise<void> {
+  const { id, title, source, lang, readMode, sourceText } = params
+  const user = await getUser()
+  await ensureProfile(user.id, user.email)
+
+  const { error } = await supabase!.from('learning_sessions').insert({
+    id,
+    user_id: user.id,
+    title,
+    source_type: source.type,
+    source_url: source.url ?? null,
+    source_text: sourceText,
+    language: lang,
+    read_mode: readMode,
+    status: 'generating',
+  })
+  if (error) throw new Error(`Create session failed: ${error.message}`)
+}
+
+// ─── 更新状态（生成失败时调用）──────────────────────────────────────────────
+export async function updateSessionStatus(id: string, status: 'pending' | 'failed'): Promise<void> {
+  await getUser() // 确认已登录
+  const { error } = await supabase!.from('learning_sessions').update({ status }).eq('id', id)
+  if (error) throw new Error(`Update status failed: ${error.message}`)
+}
+
+// ─── 生成完成，写入卡片并更新为 pending ──────────────────────────────────────
 export async function savePendingSession(params: {
   id: string
   title: string
@@ -28,7 +65,6 @@ export async function savePendingSession(params: {
 }): Promise<void> {
   const { id, title, source, lang, readMode, cards, sourceText } = params
   const user = await getUser()
-  await ensureProfile(user.id, user.email)
 
   const { error: sessionErr } = await supabase!.from('learning_sessions').upsert({
     id,
@@ -52,14 +88,14 @@ export async function savePendingSession(params: {
   if (cardsErr) throw new Error(`Cards save failed: ${cardsErr.message}`)
 }
 
-// ─── 读取 pending 会话 ────────────────────────────────────────────────────────
+// ─── 读取非完成会话（generating / pending / failed）──────────────────────────
 export async function loadPendingSessions(): Promise<ArchiveEntry[]> {
   const user = await getUser()
 
   const { data, error } = await supabase!
     .from('learning_sessions')
-    .select('id, title, source_type, source_url, source_text, language, read_mode, created_at, session_cards(card_index, card_data)')
-    .eq('status', 'pending')
+    .select('id, title, source_type, source_url, source_text, language, read_mode, created_at, status, session_cards(card_index, card_data)')
+    .in('status', ['generating', 'pending', 'failed'])
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
@@ -74,7 +110,7 @@ export async function loadPendingSessions(): Promise<ArchiveEntry[]> {
     sourceText: row.source_text ?? undefined,
     date: row.created_at,
     score: 0, total: 0,
-    status: 'pending' as const,
+    status: row.status as 'generating' | 'pending' | 'failed',
     lang: row.language as Lang,
     readMode: row.read_mode as ReadMode,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,10 +118,10 @@ export async function loadPendingSessions(): Promise<ArchiveEntry[]> {
   }))
 }
 
-// ─── 删除 pending 会话 ────────────────────────────────────────────────────────
+// ─── 删除 pending/generating/failed 会话 ─────────────────────────────────────
 export async function deletePendingSession(id: string): Promise<void> {
   const user = await getUser()
-  const { error } = await supabase!.from('learning_sessions').delete().eq('id', id).eq('user_id', user.id).eq('status', 'pending')
+  const { error } = await supabase!.from('learning_sessions').delete().eq('id', id).eq('user_id', user.id)
   if (error) throw new Error(`Delete pending failed: ${error.message}`)
 }
 
@@ -103,7 +139,6 @@ export async function saveSession(params: {
 }): Promise<void> {
   const { id, title, source, lang, cards, score, total, bulletPoints } = params
   const user = await getUser()
-  await ensureProfile(user.id, user.email)
 
   const { error: sessionErr } = await supabase!.from('learning_sessions').upsert({
     id,

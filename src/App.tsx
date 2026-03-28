@@ -3,7 +3,7 @@ import { useLanguage } from './hooks/useLanguage'
 import { generateCards, generateAISummary, findRelated } from './utils/generateCards'
 import type { ViewId, Card, Answers, Source, ArchiveEntry } from './types'
 import { supabase } from './lib/supabase'
-import { savePendingSession } from './lib/db'
+import { createGeneratingSession, savePendingSession, updateSessionStatus } from './lib/db'
 
 import Header from './components/ui/Header'
 import HomeView from './components/views/HomeView'
@@ -48,7 +48,6 @@ export default function App() {
   const [generatingCount, setGeneratingCount] = useState(0)
   const [archiveRefreshKey, setArchiveRefreshKey] = useState(0)
 
-  // true = 用户在等待界面等结果；false = 用户切走了，后台跑
   const userIsWaiting = useRef(false)
 
   function goBackground() {
@@ -59,6 +58,11 @@ export default function App() {
   async function handleSubmit(text: string, src: Source) {
     const newId = genId()
     const mode = src.readMode ?? 'deep'
+
+    // 立即占位写入 Supabase
+    await createGeneratingSession({ id: newId, title: src.title, source: src, lang, readMode: mode, sourceText: text })
+    setArchiveRefreshKey(k => k + 1)
+
     userIsWaiting.current = true
     setGeneratingCount(c => c + 1)
     setView('loading')
@@ -70,16 +74,15 @@ export default function App() {
     try {
       const generated = await generateCards(text, lang, mode)
       const withComplete: Card[] = [...generated, { type: 'complete' }]
+      await savePendingSession({ id: newId, title: src.title, source: src, lang, readMode: mode, cards: withComplete, sourceText: text })
+      setArchiveRefreshKey(k => k + 1)
 
       if (userIsWaiting.current) {
-        // 用户还在等 → 直接进学习
         setSessionId(newId)
         setSourceText(text)
         setSource(src)
-
         setCards(withComplete)
         setView('learning')
-        savePendingSession({ id: newId, title: src.title, source: src, lang, readMode: mode, cards: withComplete, sourceText: text }).catch(console.error)
         setAiSummaryLoading(true)
         setAiRelatedLoading(true)
         generateAISummary(text, lang)
@@ -90,13 +93,11 @@ export default function App() {
           .then(links => setAiRelatedLinks(links))
           .catch(() => setAiRelatedLinks([]))
           .finally(() => setAiRelatedLoading(false))
-      } else {
-        // 用户切走了 → 存入待学习，刷新 Archive
-        await savePendingSession({ id: newId, title: src.title, source: src, lang, readMode: mode, cards: withComplete, sourceText: text })
-        setArchiveRefreshKey(k => k + 1)
       }
     } catch (e) {
       console.error(e)
+      await updateSessionStatus(newId, 'failed').catch(console.error)
+      setArchiveRefreshKey(k => k + 1)
       if (userIsWaiting.current) setView('home')
     } finally {
       setGeneratingCount(c => c - 1)
@@ -104,12 +105,10 @@ export default function App() {
     }
   }
 
-  // 从 Archive 开始学习 pending 会话
   function handleStartPending(entry: ArchiveEntry) {
     setSessionId(entry.id)
     setSourceText(entry.sourceText ?? '')
     setSource({ type: entry.sourceType, title: entry.title, url: entry.sourceUrl, readMode: entry.readMode })
-
     setCards(entry.cards ?? [])
     setAnswers({})
     setAiSummaryBullets(entry.bulletPoints ?? [])
@@ -146,9 +145,11 @@ export default function App() {
     setView('learning')
   }
 
-  // 从稍后学习生成 → 纯后台，用户留在 Archive
   async function handleLearnFromUrl(url: string, title: string) {
     const newId = genId()
+    const src: Source = { type: 'url', url, title, readMode: 'deep' }
+    await createGeneratingSession({ id: newId, title, source: src, lang, readMode: 'deep', sourceText: '' })
+    setArchiveRefreshKey(k => k + 1)
     setGeneratingCount(c => c + 1)
     try {
       const res = await fetch('/api/fetch-article', {
@@ -159,13 +160,15 @@ export default function App() {
       const data = await res.json()
       const text = data.text as string
       const fetchedTitle = (data.title as string) || title
-      const src: Source = { type: 'url', url, title: fetchedTitle, readMode: 'deep' }
+      const finalSrc: Source = { type: 'url', url, title: fetchedTitle, readMode: 'deep' }
       const generated = await generateCards(text, lang, 'deep')
       const withComplete: Card[] = [...generated, { type: 'complete' }]
-      await savePendingSession({ id: newId, title: fetchedTitle, source: src, lang, readMode: 'deep', cards: withComplete, sourceText: text })
+      await savePendingSession({ id: newId, title: fetchedTitle, source: finalSrc, lang, readMode: 'deep', cards: withComplete, sourceText: text })
       setArchiveRefreshKey(k => k + 1)
     } catch (e) {
       console.error(e)
+      await updateSessionStatus(newId, 'failed').catch(console.error)
+      setArchiveRefreshKey(k => k + 1)
     } finally {
       setGeneratingCount(c => c - 1)
     }
@@ -176,7 +179,6 @@ export default function App() {
     setAuthed(false)
   }
 
-  // 在 loading 时点 Archive → 切走，后台继续
   function handleArchiveClick() {
     if (view === 'loading') userIsWaiting.current = false
     setView('archive')
@@ -201,12 +203,8 @@ export default function App() {
         t={t}
       />
       <main className="pt-14">
-        {view === 'home' && (
-          <HomeView onSubmit={handleSubmit} t={t} />
-        )}
-        {view === 'loading' && (
-          <LoadingView onBackground={goBackground} t={t} />
-        )}
+        {view === 'home' && <HomeView onSubmit={handleSubmit} t={t} />}
+        {view === 'loading' && <LoadingView onBackground={goBackground} t={t} />}
         {view === 'learning' && cards.length > 0 && (
           <LearningView
             cards={cards}

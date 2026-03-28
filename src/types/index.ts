@@ -111,7 +111,7 @@ export interface ArchiveEntry {
   total: number
   cards?: Card[]
   bulletPoints?: string[]
-  status?: 'pending' | 'completed'
+  status?: 'generating' | 'pending' | 'failed' | 'completed'
   sourceText?: string  // stored locally for chatbot context
   lang?: Lang
   readMode?: ReadMode
