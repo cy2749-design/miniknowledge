@@ -204,7 +204,7 @@ async function callDashScopeWithSearch(systemPrompt: string, userContent: string
     { role: 'user', content: userContent },
   ]
 
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 10; i++) {
     const res = await fetchWithTimeout(`${DASHSCOPE_BASE}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -234,7 +234,7 @@ async function callDashScopeWithSearch(systemPrompt: string, userContent: string
 
     if (choice.finish_reason === 'tool_calls' && msg.tool_calls?.length) {
       for (const tc of msg.tool_calls) {
-        messages.push({ role: 'tool', tool_call_id: tc.id, name: tc.function.name, content: '' })
+        messages.push({ role: 'tool', tool_call_id: tc.id, content: '' })
       }
       continue
     }
