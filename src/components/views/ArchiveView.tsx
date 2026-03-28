@@ -33,7 +33,7 @@ function SessionDetail({ entry, onBack, onReplay, onDelete, t }: {
 
         <div className="flex items-center gap-2 mb-6">
           <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
-            {entry.sourceType === 'url' ? t('archive.source.url') : t('archive.source.text')}
+            {t(`archive.source.${entry.sourceType}`)}
           </span>
           <span className="text-xs text-gray-400">{new Date(entry.date).toLocaleDateString()}</span>
         </div>
@@ -246,7 +246,7 @@ export default function ArchiveView({ refreshKey, onBack, onReplay, onStartPendi
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
-                          {entry.sourceType === 'url' ? t('archive.source.url') : t('archive.source.text')}
+                          {t(`archive.source.${entry.sourceType}`)}
                         </span>
                         <span className="text-xs text-gray-400">{new Date(entry.date).toLocaleDateString()}</span>
                       </div>

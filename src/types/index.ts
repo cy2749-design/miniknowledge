@@ -9,7 +9,7 @@ export type ReadMode = 'skim' | 'deep'
 
 // ─── Source ──────────────────────────────────────────────────────────────────
 export interface Source {
-  type: 'url' | 'text'
+  type: 'url' | 'text' | 'pdf'
   title: string
   url?: string
   readMode?: ReadMode
@@ -104,7 +104,7 @@ export interface LearningSession {
 export interface ArchiveEntry {
   id: string
   title: string
-  sourceType: 'url' | 'text'
+  sourceType: 'url' | 'text' | 'pdf'
   sourceUrl?: string
   date: string
   score: number
