@@ -1,6 +1,6 @@
 import { Trash2, RotateCcw, ArrowLeft, Loader2, ExternalLink, BookOpen, Clock, ChevronRight, GraduationCap, PlayCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import type { ArchiveEntry, ReadLaterEntry, Card } from '../../types'
+import type { ArchiveEntry, ReadLaterEntry } from '../../types'
 import { loadSessions, deleteSession, loadReadLater, deleteReadLater, loadPendingSessions, deletePendingSession } from '../../lib/db'
 
 type Tab = 'learned' | 'read-later'
@@ -8,7 +8,7 @@ type Tab = 'learned' | 'read-later'
 interface Props {
   refreshKey?: number
   onBack: () => void
-  onReplay: (cards: Card[]) => void
+  onReplay: (entry: ArchiveEntry) => void
   onStartPending: (entry: ArchiveEntry) => void
   onLearnFromUrl: (url: string, title: string) => void
   t: (key: string) => string
@@ -17,7 +17,7 @@ interface Props {
 function SessionDetail({ entry, onBack, onReplay, onDelete, t }: {
   entry: ArchiveEntry
   onBack: () => void
-  onReplay: (cards: Card[]) => void
+  onReplay: (entry: ArchiveEntry) => void
   onDelete: (id: string) => void
   t: (key: string) => string
 }) {
@@ -59,7 +59,7 @@ function SessionDetail({ entry, onBack, onReplay, onDelete, t }: {
         <div className="flex flex-col gap-3">
           {entry.cards && (
             <button
-              onClick={() => onReplay(entry.cards!)}
+              onClick={() => onReplay(entry)}
               className="w-full py-3 bg-gray-900 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2"
             >
               <RotateCcw size={16} />{t('archive.replay')}

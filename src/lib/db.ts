@@ -2,7 +2,7 @@
  * db.ts — 数据层（仅 Supabase）
  */
 import { supabase } from './supabase'
-import type { Card, Answers, ArchiveEntry, ReadLaterEntry, Source, Lang, ReadMode } from '../types'
+import type { Card, ArchiveEntry, ReadLaterEntry, Source, Lang, ReadMode } from '../types'
 
 async function getUser() {
   if (!supabase) throw new Error('Supabase not configured')
@@ -130,14 +130,12 @@ export async function saveSession(params: {
   id: string
   title: string
   source: Source
+  sourceText?: string
   lang: Lang
   cards: Card[]
-  answers: Answers
-  score: number
-  total: number
   bulletPoints?: string[]
 }): Promise<void> {
-  const { id, title, source, lang, cards, score, total, bulletPoints } = params
+  const { id, title, source, sourceText, lang, cards, bulletPoints } = params
   const user = await getUser()
 
   const { error: sessionErr } = await supabase!.from('learning_sessions').upsert({
@@ -146,11 +144,10 @@ export async function saveSession(params: {
     title,
     source_type: source.type,
     source_url: source.url ?? null,
+    source_text: sourceText ?? null,
     language: lang,
     status: 'completed',
     bullet_points: bulletPoints ?? null,
-    score,
-    total_quiz: total,
     completed_at: new Date().toISOString(),
   })
   if (sessionErr) throw new Error(`Session save failed: ${sessionErr.message}`)
@@ -170,7 +167,7 @@ export async function loadSessions(): Promise<ArchiveEntry[]> {
 
   const { data, error } = await supabase!
     .from('learning_sessions')
-    .select('id, title, source_type, source_url, language, created_at, score, total_quiz, bullet_points, session_cards(card_index, card_data)')
+    .select('id, title, source_type, source_url, source_text, language, created_at, bullet_points, session_cards(card_index, card_data)')
     .eq('status', 'completed')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
@@ -183,9 +180,11 @@ export async function loadSessions(): Promise<ArchiveEntry[]> {
     title: row.title,
     sourceType: row.source_type as 'url' | 'text',
     sourceUrl: row.source_url ?? undefined,
+    sourceText: row.source_text ?? undefined,
+    lang: row.language as Lang,
     date: row.created_at,
-    score: row.score ?? 0,
-    total: row.total_quiz ?? 0,
+    score: 0,
+    total: 0,
     status: 'completed' as const,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     cards: (row.session_cards ?? []).sort((a: any, b: any) => a.card_index - b.card_index).map((c: any) => c.card_data as Card),

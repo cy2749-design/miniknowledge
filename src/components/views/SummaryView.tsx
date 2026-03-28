@@ -9,6 +9,7 @@ interface Props {
   sessionId: string
   title: string
   source: Source
+  sourceText: string
   lang: Lang
   bulletPoints?: string[]
   onRestart: () => void
@@ -16,17 +17,13 @@ interface Props {
   t: (key: string, vars?: Record<string, string | number>) => string
 }
 
-export default function SummaryView({ cards, answers, sessionId, title, source, lang, bulletPoints, onRestart, onReviewCards, t }: Props) {
+export default function SummaryView({ cards, answers, sessionId, title, source, sourceText, lang, bulletPoints, onRestart, onReviewCards, t }: Props) {
   const saved = useRef(false)
-
-  const quizCards = cards.filter(c => c.type === 'quiz' || c.type === 'review' || c.type === 'trueFalse' || c.type === 'output')
-  const correctCount = quizCards.filter(c => answers[cards.indexOf(c)]?.correct).length
-  const total = quizCards.length
 
   useEffect(() => {
     if (saved.current) return
     saved.current = true
-    saveSession({ id: sessionId, title, source, lang, cards, answers, score: correctCount, total, bulletPoints })
+    saveSession({ id: sessionId, title, source, sourceText, lang, cards, bulletPoints })
       .catch(console.error)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 

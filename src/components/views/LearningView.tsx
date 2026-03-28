@@ -5,7 +5,6 @@ import type { Card, Answers } from '../../types'
 import ContentCard from '../cards/ContentCard'
 import QuizCard from '../cards/QuizCard'
 import TrueFalseCard from '../cards/TrueFalseCard'
-import CompleteCard from '../cards/CompleteCard'
 import ProgressBar from '../ui/ProgressBar'
 import { chatWithAI } from '../../utils/generateCards'
 
@@ -43,7 +42,7 @@ export default function LearningView({ cards, answers, sourceText, lang, onAnswe
   const card = cards[idx]
   const answered = isInteractive(card) ? answers[idx] !== undefined : true
   const isLast = idx === cards.length - 1
-  const showChat = card.type !== 'complete'
+  const showChat = true
 
   const advance = useCallback(() => {
     if (isLast) { onComplete(); return }
@@ -61,8 +60,6 @@ export default function LearningView({ cards, answers, sourceText, lang, onAnswe
       return <QuizCard card={card} onAnswer={handleAnswer} savedAnswer={answers[idx]} t={k => t(k)} />
     if (card.type === 'trueFalse')
       return <TrueFalseCard card={card} onAnswer={handleAnswer} savedAnswer={answers[idx]} t={k => t(k)} />
-    if (card.type === 'complete')
-      return <CompleteCard onContinue={onComplete} t={k => t(k)} />
     return null
   }
 
@@ -92,8 +89,6 @@ export default function LearningView({ cards, answers, sourceText, lang, onAnswe
     if (chatOpen) chatInputRef.current?.focus()
   }, [chatOpen])
 
-  const showNext = card.type !== 'complete'
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-20">
       <div className="w-full max-w-xl">
@@ -117,8 +112,7 @@ export default function LearningView({ cards, answers, sourceText, lang, onAnswe
           </AnimatePresence>
         </div>
 
-        {showNext && (
-          <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex justify-end">
             <AnimatePresence mode="wait">
               {answered ? (
                 <motion.button
@@ -143,12 +137,10 @@ export default function LearningView({ cards, answers, sourceText, lang, onAnswe
                 </motion.p>
               )}
             </AnimatePresence>
-          </div>
-        )}
+        </div>
 
         {/* Chatbot */}
-        {showChat && (
-          <div className="mt-4">
+        <div className="mt-4">
             {!chatOpen ? (
               <button
                 onClick={() => setChatOpen(true)}
@@ -221,7 +213,7 @@ export default function LearningView({ cards, answers, sourceText, lang, onAnswe
               </motion.div>
             )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   )

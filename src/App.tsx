@@ -18,6 +18,29 @@ function genId() {
   return crypto.randomUUID()
 }
 
+function startAiBackground(
+  text: string,
+  entryLang: string,
+  setAiSummaryBullets: (b: string[]) => void,
+  setAiSummaryLoading: (v: boolean) => void,
+  setAiRelatedLinks: (l: {title: string; url: string; description: string}[]) => void,
+  setAiRelatedLoading: (v: boolean) => void,
+  hasBullets: boolean,
+) {
+  if (!hasBullets) {
+    setAiSummaryLoading(true)
+    generateAISummary(text, entryLang)
+      .then(bullets => setAiSummaryBullets(bullets))
+      .catch(() => {})
+      .finally(() => setAiSummaryLoading(false))
+  }
+  setAiRelatedLoading(true)
+  findRelated(text, entryLang)
+    .then(links => setAiRelatedLinks(links))
+    .catch(() => {})
+    .finally(() => setAiRelatedLoading(false))
+}
+
 export default function App() {
   const { lang, setLang, t } = useLanguage()
   const [view, setView] = useState<ViewId>('home')
@@ -68,30 +91,19 @@ export default function App() {
     setAiRelatedLinks([])
 
     try {
-      // 立即占位写入 Supabase
       await createGeneratingSession({ id: newId, title: src.title, source: src, lang, readMode: mode, sourceText: text })
       setArchiveRefreshKey(k => k + 1)
       const generated = await generateCards(text, lang, mode)
-      const withComplete: Card[] = [...generated, { type: 'complete' }]
-      await savePendingSession({ id: newId, title: src.title, source: src, lang, readMode: mode, cards: withComplete, sourceText: text })
+      await savePendingSession({ id: newId, title: src.title, source: src, lang, readMode: mode, cards: generated, sourceText: text })
       setArchiveRefreshKey(k => k + 1)
 
       if (userIsWaiting.current) {
         setSessionId(newId)
         setSourceText(text)
         setSource(src)
-        setCards(withComplete)
+        setCards(generated)
         setView('learning')
-        setAiSummaryLoading(true)
-        setAiRelatedLoading(true)
-        generateAISummary(text, lang)
-          .then(bullets => setAiSummaryBullets(bullets))
-          .catch(() => setAiSummaryBullets([]))
-          .finally(() => setAiSummaryLoading(false))
-        findRelated(text, lang)
-          .then(links => setAiRelatedLinks(links))
-          .catch(() => setAiRelatedLinks([]))
-          .finally(() => setAiRelatedLoading(false))
+        startAiBackground(text, lang, setAiSummaryBullets, setAiSummaryLoading, setAiRelatedLinks, setAiRelatedLoading, false)
       }
     } catch (e) {
       console.error(e)
@@ -105,27 +117,32 @@ export default function App() {
   }
 
   function handleStartPending(entry: ArchiveEntry) {
+    const entryCards = (entry.cards ?? []).filter(c => c.type !== 'complete')
     setSessionId(entry.id)
     setSourceText(entry.sourceText ?? '')
     setSource({ type: entry.sourceType, title: entry.title, url: entry.sourceUrl, readMode: entry.readMode })
-    setCards(entry.cards ?? [])
+    setCards(entryCards)
     setAnswers({})
     setAiSummaryBullets(entry.bulletPoints ?? [])
     setAiRelatedLinks([])
     setView('learning')
     if (entry.sourceText) {
-      if (!entry.bulletPoints?.length) {
-        setAiSummaryLoading(true)
-        generateAISummary(entry.sourceText, entry.lang ?? lang)
-          .then(bullets => setAiSummaryBullets(bullets))
-          .catch(() => {})
-          .finally(() => setAiSummaryLoading(false))
-      }
-      setAiRelatedLoading(true)
-      findRelated(entry.sourceText, entry.lang ?? lang)
-        .then(links => setAiRelatedLinks(links))
-        .catch(() => {})
-        .finally(() => setAiRelatedLoading(false))
+      startAiBackground(entry.sourceText, entry.lang ?? lang, setAiSummaryBullets, setAiSummaryLoading, setAiRelatedLinks, setAiRelatedLoading, !!entry.bulletPoints?.length)
+    }
+  }
+
+  function handleReplay(entry: ArchiveEntry) {
+    const entryCards = (entry.cards ?? []).filter(c => c.type !== 'complete')
+    setSessionId(entry.id)
+    setSourceText(entry.sourceText ?? '')
+    setSource({ type: entry.sourceType, title: entry.title, url: entry.sourceUrl })
+    setCards(entryCards)
+    setAnswers({})
+    setAiSummaryBullets(entry.bulletPoints ?? [])
+    setAiRelatedLinks([])
+    setView('learning')
+    if (entry.sourceText) {
+      startAiBackground(entry.sourceText, entry.lang ?? lang, setAiSummaryBullets, setAiSummaryLoading, setAiRelatedLinks, setAiRelatedLoading, !!entry.bulletPoints?.length)
     }
   }
 
@@ -145,12 +162,6 @@ export default function App() {
     setAiRelatedLinks([])
   }
 
-  function handleReplay(replayCards: Card[]) {
-    setCards([...replayCards, { type: 'complete' }])
-    setAnswers({})
-    setView('learning')
-  }
-
   async function handleLearnFromUrl(url: string, title: string) {
     const newId = genId()
     const src: Source = { type: 'url', url, title, readMode: 'deep' }
@@ -168,8 +179,7 @@ export default function App() {
       const fetchedTitle = (data.title as string) || title
       const finalSrc: Source = { type: 'url', url, title: fetchedTitle, readMode: 'deep' }
       const generated = await generateCards(text, lang, 'deep')
-      const withComplete: Card[] = [...generated, { type: 'complete' }]
-      await savePendingSession({ id: newId, title: fetchedTitle, source: finalSrc, lang, readMode: 'deep', cards: withComplete, sourceText: text })
+      await savePendingSession({ id: newId, title: fetchedTitle, source: finalSrc, lang, readMode: 'deep', cards: generated, sourceText: text })
       setArchiveRefreshKey(k => k + 1)
     } catch (e) {
       console.error(e)
@@ -241,6 +251,7 @@ export default function App() {
             sessionId={sessionId}
             title={source.title}
             source={source}
+            sourceText={sourceText}
             lang={lang}
             bulletPoints={aiSummaryBullets}
             onRestart={handleRestart}
