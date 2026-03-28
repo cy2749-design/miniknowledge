@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Loader2, ExternalLink, Bookmark, Check } from 'lucide-react'
+import { Loader2, ExternalLink, Bookmark, Check, RotateCcw } from 'lucide-react'
 import { addReadLater } from '../../lib/db'
 import type { ReadLaterEntry } from '../../types'
 
@@ -16,11 +16,12 @@ interface Props {
   relatedLoading: boolean
   sourceText: string
   lang: string
-  onContinue: () => void
+  onRestart: () => void
+  onReviewCards: () => void
   t: (key: string) => string
 }
 
-export default function AISummaryView({ bullets, loading, relatedLinks, relatedLoading, onContinue, t }: Props) {
+export default function AISummaryView({ bullets, loading, relatedLinks, relatedLoading, onRestart, onReviewCards, t }: Props) {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
 
   async function handleSaveLink(link: RelatedLink) {
@@ -103,12 +104,20 @@ export default function AISummaryView({ bullets, loading, relatedLinks, relatedL
         )}
 
         {!loading && (
-          <button
-            onClick={onContinue}
-            className="w-full py-3 bg-gray-900 text-white font-semibold rounded-xl shadow-md btn-primary"
-          >
-            {t('aisummary.continue')}
-          </button>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={onReviewCards}
+              className="w-full py-3 border-2 border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+            >
+              <RotateCcw size={16} />{t('summary.review_again')}
+            </button>
+            <button
+              onClick={onRestart}
+              className="w-full py-3 bg-gray-900 text-white font-semibold rounded-xl shadow-md btn-primary"
+            >
+              {t('summary.restart')}
+            </button>
+          </div>
         )}
       </div>
     </div>

@@ -3,14 +3,13 @@ import { useLanguage } from './hooks/useLanguage'
 import { generateCards, generateAISummary, findRelated } from './utils/generateCards'
 import type { ViewId, Card, Answers, Source, ArchiveEntry } from './types'
 import { supabase } from './lib/supabase'
-import { createGeneratingSession, savePendingSession, updateSessionStatus } from './lib/db'
+import { createGeneratingSession, savePendingSession, updateSessionStatus, saveSession } from './lib/db'
 
 import Header from './components/ui/Header'
 import HomeView from './components/views/HomeView'
 import LoadingView from './components/views/LoadingView'
 import LearningView from './components/views/LearningView'
 import AISummaryView from './components/views/AISummaryView'
-import SummaryView from './components/views/SummaryView'
 import ArchiveView from './components/views/ArchiveView'
 import AuthView from './components/views/AuthView'
 
@@ -152,6 +151,8 @@ export default function App() {
 
   function handleLearningComplete() {
     setView('ai-summary')
+    saveSession({ id: sessionId, title: source.title, source, sourceText, lang, cards, bulletPoints: aiSummaryBullets })
+      .catch(console.error)
   }
 
   function handleRestart() {
@@ -240,19 +241,6 @@ export default function App() {
             relatedLoading={aiRelatedLoading}
             sourceText={sourceText}
             lang={lang}
-            onContinue={() => setView('summary')}
-            t={t}
-          />
-        )}
-        {view === 'summary' && (
-          <SummaryView
-            cards={cards}
-            sessionId={sessionId}
-            title={source.title}
-            source={source}
-            sourceText={sourceText}
-            lang={lang}
-            bulletPoints={aiSummaryBullets}
             onRestart={handleRestart}
             onReviewCards={() => setView('learning')}
             t={t}

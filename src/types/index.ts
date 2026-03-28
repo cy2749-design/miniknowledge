@@ -1,5 +1,5 @@
 // ─── View Routing ───────────────────────────────────────────────────────────
-export type ViewId = 'home' | 'loading' | 'learning' | 'ai-summary' | 'summary' | 'archive'
+export type ViewId = 'home' | 'loading' | 'learning' | 'ai-summary' | 'archive'
 
 // ─── Language ────────────────────────────────────────────────────────────────
 export type Lang = 'en' | 'zh'
