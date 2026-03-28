@@ -59,10 +59,6 @@ export default function App() {
     const newId = genId()
     const mode = src.readMode ?? 'deep'
 
-    // 立即占位写入 Supabase
-    await createGeneratingSession({ id: newId, title: src.title, source: src, lang, readMode: mode, sourceText: text })
-    setArchiveRefreshKey(k => k + 1)
-
     userIsWaiting.current = true
     setGeneratingCount(c => c + 1)
     setView('loading')
@@ -72,6 +68,9 @@ export default function App() {
     setAiRelatedLinks([])
 
     try {
+      // 立即占位写入 Supabase
+      await createGeneratingSession({ id: newId, title: src.title, source: src, lang, readMode: mode, sourceText: text })
+      setArchiveRefreshKey(k => k + 1)
       const generated = await generateCards(text, lang, mode)
       const withComplete: Card[] = [...generated, { type: 'complete' }]
       await savePendingSession({ id: newId, title: src.title, source: src, lang, readMode: mode, cards: withComplete, sourceText: text })
@@ -148,10 +147,10 @@ export default function App() {
   async function handleLearnFromUrl(url: string, title: string) {
     const newId = genId()
     const src: Source = { type: 'url', url, title, readMode: 'deep' }
-    await createGeneratingSession({ id: newId, title, source: src, lang, readMode: 'deep', sourceText: '' })
-    setArchiveRefreshKey(k => k + 1)
     setGeneratingCount(c => c + 1)
     try {
+      await createGeneratingSession({ id: newId, title, source: src, lang, readMode: 'deep', sourceText: '' })
+      setArchiveRefreshKey(k => k + 1)
       const res = await fetch('/api/fetch-article', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -123,11 +123,19 @@ const CHAT_SYSTEM_PROMPT = (lang: string, context: string) => lang === 'zh'
   ? `你是一位耐心的知识导师，正在帮助用户学习一篇文章。用简单易懂的语言回答问题，多用类比和例子，避免堆砌术语。回答简洁（2–4句为宜）。如果问题与文章相关，结合文章内容回答。\n\n【文章内容】\n${context.slice(0, 4000)}`
   : `You are a patient tutor helping someone study an article. Answer clearly and simply — use analogies and examples, avoid jargon. Keep responses concise (2–4 sentences). Reference the article when relevant.\n\n[Article]\n${context.slice(0, 4000)}`
 
+const TIMEOUT_MS = 120000
+
+function fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer))
+}
+
 async function callDashScope(systemPrompt: string, userContent: string): Promise<string> {
   const apiKey = process.env.DASHSCOPE_API_KEY
   if (!apiKey) throw new Error('DASHSCOPE_API_KEY not set')
 
-  const res = await fetch(`${DASHSCOPE_BASE}/chat/completions`, {
+  const res = await fetchWithTimeout(`${DASHSCOPE_BASE}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -141,6 +149,7 @@ async function callDashScope(systemPrompt: string, userContent: string): Promise
       ],
       max_tokens: 8000,
       temperature: 0.7,
+      enable_thinking: false,
     }),
   })
 
@@ -160,7 +169,7 @@ async function callDashScopeChat(
   const apiKey = process.env.DASHSCOPE_API_KEY
   if (!apiKey) throw new Error('DASHSCOPE_API_KEY not set')
 
-  const res = await fetch(`${DASHSCOPE_BASE}/chat/completions`, {
+  const res = await fetchWithTimeout(`${DASHSCOPE_BASE}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -171,6 +180,7 @@ async function callDashScopeChat(
       messages: [{ role: 'system', content: systemPrompt }, ...messages],
       max_tokens: 1000,
       temperature: 0.7,
+      enable_thinking: false,
     }),
   })
 
@@ -198,7 +208,7 @@ async function callDashScopeWithSearch(systemPrompt: string, userContent: string
 
   // Agentic loop: keep calling until no more tool calls
   for (let i = 0; i < 5; i++) {
-    const res = await fetch(`${DASHSCOPE_BASE}/chat/completions`, {
+    const res = await fetchWithTimeout(`${DASHSCOPE_BASE}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -210,6 +220,7 @@ async function callDashScopeWithSearch(systemPrompt: string, userContent: string
         tools,
         max_tokens: 8000,
         temperature: 0.7,
+        enable_thinking: false,
       }),
     })
 
