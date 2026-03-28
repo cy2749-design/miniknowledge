@@ -1,10 +1,9 @@
 import { Trophy, RotateCcw } from 'lucide-react'
 import { useEffect, useRef } from 'react'
-import type { Card, Source, Lang } from '../../types'
+import type { Source, Lang } from '../../types'
 import { saveSession } from '../../lib/db'
 
 interface Props {
-  cards: Card[]
   sessionId: string
   title: string
   source: Source
@@ -16,7 +15,7 @@ interface Props {
   t: (key: string, vars?: Record<string, string | number>) => string
 }
 
-export default function SummaryView({ cards, sessionId, title, source, sourceText, lang, bulletPoints, onRestart, onReviewCards, t }: Props) {
+export default function SummaryView({ sessionId, title, source, sourceText, lang, bulletPoints, onRestart, onReviewCards, t }: Props) {
   const saved = useRef(false)
 
   useEffect(() => {
