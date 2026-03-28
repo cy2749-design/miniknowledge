@@ -132,10 +132,9 @@ export async function saveSession(params: {
   source: Source
   sourceText?: string
   lang: Lang
-  cards: Card[]
   bulletPoints?: string[]
 }): Promise<void> {
-  const { id, title, source, sourceText, lang, cards, bulletPoints } = params
+  const { id, title, source, sourceText, lang, bulletPoints } = params
   const user = await getUser()
 
   const { error: sessionErr } = await supabase!.from('learning_sessions').upsert({
@@ -152,13 +151,7 @@ export async function saveSession(params: {
   })
   if (sessionErr) throw new Error(`Session save failed: ${sessionErr.message}`)
 
-  const cardRows = cards.map((card, i) => ({
-    session_id: id,
-    card_index: i,
-    card_data: card as unknown as Record<string, unknown>,
-  }))
-  const { error: cardsErr } = await supabase!.from('session_cards').upsert(cardRows)
-  if (cardsErr) throw new Error(`Cards save failed: ${cardsErr.message}`)
+  // Cards are already saved by savePendingSession — skip re-inserting to avoid duplicates
 }
 
 // ─── 读取已完成会话 ───────────────────────────────────────────────────────────

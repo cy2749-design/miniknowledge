@@ -151,7 +151,7 @@ export default function App() {
 
   function handleLearningComplete() {
     setView('ai-summary')
-    saveSession({ id: sessionId, title: source.title, source, sourceText, lang, cards, bulletPoints: aiSummaryBullets })
+    saveSession({ id: sessionId, title: source.title, source, sourceText, lang, bulletPoints: aiSummaryBullets })
       .catch(console.error)
   }
 
