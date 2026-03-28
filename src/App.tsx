@@ -69,6 +69,7 @@ export default function App() {
 
   const [generatingCount, setGeneratingCount] = useState(0)
   const [archiveRefreshKey, setArchiveRefreshKey] = useState(0)
+  const [prefillUrl, setPrefillUrl] = useState<string | undefined>(undefined)
 
   const userIsWaiting = useRef(false)
 
@@ -81,6 +82,7 @@ export default function App() {
     const newId = genId()
     const mode = src.readMode ?? 'deep'
 
+    setPrefillUrl(undefined)
     userIsWaiting.current = true
     setGeneratingCount(c => c + 1)
     setView('loading')
@@ -163,32 +165,9 @@ export default function App() {
     setAiRelatedLinks([])
   }
 
-  async function handleLearnFromUrl(url: string, title: string) {
-    const newId = genId()
-    const src: Source = { type: 'url', url, title, readMode: 'deep' }
-    setGeneratingCount(c => c + 1)
-    try {
-      await createGeneratingSession({ id: newId, title, source: src, lang, readMode: 'deep', sourceText: '' })
-      setArchiveRefreshKey(k => k + 1)
-      const res = await fetch('/api/fetch-article', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
-      })
-      const data = await res.json()
-      const text = data.text as string
-      const fetchedTitle = (data.title as string) || title
-      const finalSrc: Source = { type: 'url', url, title: fetchedTitle, readMode: 'deep' }
-      const generated = await generateCards(text, lang, 'deep')
-      await savePendingSession({ id: newId, title: fetchedTitle, source: finalSrc, lang, readMode: 'deep', cards: generated, sourceText: text })
-      setArchiveRefreshKey(k => k + 1)
-    } catch (e) {
-      console.error(e)
-      await updateSessionStatus(newId, 'failed').catch(console.error)
-      setArchiveRefreshKey(k => k + 1)
-    } finally {
-      setGeneratingCount(c => c - 1)
-    }
+  function handleLearnFromUrl(url: string) {
+    setPrefillUrl(url)
+    setView('home')
   }
 
   async function handleLogout() {
@@ -220,7 +199,7 @@ export default function App() {
         t={t}
       />
       <main className="pt-14">
-        {view === 'home' && <HomeView onSubmit={handleSubmit} t={t} />}
+        {view === 'home' && <HomeView onSubmit={handleSubmit} t={t} initialUrl={prefillUrl} />}
         {view === 'loading' && <LoadingView onBackground={goBackground} t={t} />}
         {view === 'learning' && cards.length > 0 && (
           <LearningView

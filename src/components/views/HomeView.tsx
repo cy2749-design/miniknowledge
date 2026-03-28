@@ -13,6 +13,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 interface Props {
   onSubmit: (text: string, source: Source) => void
   t: (key: string, vars?: Record<string, string | number>) => string
+  initialUrl?: string
 }
 
 type Tab = 'url' | 'text' | 'pdf'
@@ -30,9 +31,9 @@ async function extractPdfText(file: File): Promise<string> {
   return pages.join('\n\n')
 }
 
-export default function HomeView({ onSubmit, t }: Props) {
-  const [tab, setTab] = useState<Tab>('url')
-  const [value, setValue] = useState('')
+export default function HomeView({ onSubmit, t, initialUrl }: Props) {
+  const [tab, setTab] = useState<Tab>(initialUrl ? 'url' : 'url')
+  const [value, setValue] = useState(initialUrl ?? '')
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [readMode, setReadMode] = useState<ReadMode>('deep')
   const [loading, setLoading] = useState(false)

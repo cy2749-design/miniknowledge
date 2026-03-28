@@ -10,7 +10,7 @@ interface Props {
   onBack: () => void
   onReplay: (entry: ArchiveEntry) => void
   onStartPending: (entry: ArchiveEntry) => void
-  onLearnFromUrl: (url: string, title: string) => void
+  onLearnFromUrl: (url: string) => void
   t: (key: string) => string
 }
 
@@ -84,8 +84,6 @@ export default function ArchiveView({ refreshKey, onBack, onReplay, onStartPendi
   const [readLater, setReadLater] = useState<ReadLaterEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedSession, setSelectedSession] = useState<ArchiveEntry | null>(null)
-  const [learningId, setLearningId] = useState<string | null>(null)
-
   useEffect(() => {
     setLoading(true)
     Promise.all([loadSessions(), loadPendingSessions(), loadReadLater()]).then(([s, p, r]) => {
@@ -111,10 +109,8 @@ export default function ArchiveView({ refreshKey, onBack, onReplay, onStartPendi
     setReadLater(prev => prev.filter(e => e.id !== id))
   }
 
-  async function handleLearn(entry: ReadLaterEntry) {
-    setLearningId(entry.id)
-    await onLearnFromUrl(entry.url, entry.title)
-    setLearningId(null)
+  function handleLearn(entry: ReadLaterEntry) {
+    onLearnFromUrl(entry.url)
   }
 
   if (selectedSession) {
@@ -279,13 +275,10 @@ export default function ArchiveView({ refreshKey, onBack, onReplay, onStartPendi
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => handleLearn(entry)}
-                        disabled={learningId === entry.id}
-                        className="p-2 rounded-xl hover:bg-green-50 text-green-600 transition-colors disabled:opacity-50"
+                        className="p-2 rounded-xl hover:bg-green-50 text-green-600 transition-colors"
                         title={t('archive.learn')}
                       >
-                        {learningId === entry.id
-                          ? <Loader2 size={16} className="animate-spin" />
-                          : <GraduationCap size={16} />}
+                        <GraduationCap size={16} />
                       </button>
                       <a
                         href={entry.url}
