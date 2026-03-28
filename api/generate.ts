@@ -188,8 +188,7 @@ async function callDashScopeWithSearch(systemPrompt: string, userContent: string
   if (!apiKey) throw new Error('DASHSCOPE_API_KEY not set')
 
   const tools = [{
-    type: 'builtin_function',
-    function: { name: '$web_search' },
+    type: 'web_search',
   }]
 
   let messages: { role: string; content: string; tool_call_id?: string; name?: string }[] = [
